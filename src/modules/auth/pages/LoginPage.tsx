@@ -3,7 +3,7 @@ import LoginForm from "../components/LoginForm";
 import loginUser from "../services/authService";
 import { jwtDecode } from "jwt-decode";
 
-const Login = () => {
+const LoginPage = () => {
 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false)
@@ -36,4 +36,4 @@ const Login = () => {
 }
 
 
-export default Login;
+export default LoginPage;
