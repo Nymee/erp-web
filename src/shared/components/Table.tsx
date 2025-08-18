@@ -20,30 +20,9 @@ import Switch from "@mui/material/Switch";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
-
-function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
+import type { HeadCell } from "../../interfaces/interfaces";
 
 type Order = "asc" | "desc";
-
-function getComparator<Key extends keyof any>(
-  order: Order,
-  orderBy: Key
-): (
-  a: { [key in Key]: number | string },
-  b: { [key in Key]: number | string }
-) => number {
-  return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
 
 // const headCells: readonly HeadCell[] = [
 //   {
@@ -78,36 +57,45 @@ function getComparator<Key extends keyof any>(
 //   },
 // ];
 
-interface EnhancedTableProps {
+interface EnhancedTableProps<T> {
+  order: Order;
+  setOrder: React.Dispatch<React.SetStateAction<"asc" | "desc">>;
+  orderBy: keyof T;
+  setOrderBy: React.Dispatch<React.SetStateAction<keyof T>>;
+  
+  selected: number[];
+  setSelected: React.Dispatch<React.SetStateAction<number[]>>;
+  
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+  
+  dense: boolean;
+  setDense: React.Dispatch<React.SetStateAction<boolean>>;
+  
+  rowsPerPage: number;
+  setRowsPerPage: React.Dispatch<React.SetStateAction<number>>;
+
+  rows: T[];
+  headCells: HeadCell<T>[];
+  id: string;
+}
+
+interface EnhancedProps<T>{
   numSelected: number;
-  onRequestSort: (
-    event: React.MouseEvent<unknown>,
-    property: keyof Data
-  ) => void;
+  onRequestSort: (event: React.MouseEvent<unknown>, property: keyof T) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
   orderBy: string;
   rowCount: number;
-  headCells: HeadCell[];
-  rows: Data[];
-  selected: number[];
-  page: number;
-  dense: boolean;
-  rowsPerPage: number;
+  headCells: HeadCell<T>[];
 }
 
-function EnhancedTableHead(props: EnhancedTableProps) {
-  const {
-    onSelectAllClick,
-    order,
-    orderBy,
-    numSelected,
-    rowCount,
-    onRequestSort,
-    headCells,
-  } = props;
+function EnhancedTableHead<T>(props: EnhancedProps<T>) {
+  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort, headCells } =
+    props;
+
   const createSortHandler =
-    (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
+    (property: keyof T) => (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property);
     };
 
@@ -127,7 +115,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
         </TableCell>
         {headCells.map((headCell) => (
           <TableCell
-            key={headCell.id}
+            key={String(headCell.id)}
             align={headCell.numeric ? "right" : "left"}
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
@@ -206,17 +194,27 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     </Toolbar>
   );
 }
-export default function EnhancedTable<T>(props: EnhancedTableProps) {
-  // const [order, setOrder] = React.useState<Order>('asc');
-  // const [orderBy, setOrderBy] = React.useState<keyof Data>('calories');
-  // const [selected, setSelected] = React.useState<readonly number[]>([]);
-  // const [page, setPage] = React.useState(0);
-  // const [dense, setDense] = React.useState(false);
-  // const [rowsPerPage, setRowsPerPage] = React.useState(5);
+export default function EnhancedTable<T extends Record<string, any>>({
+  rows,
+  headCells,
+  order,
+  setOrder,
+  orderBy,
+  setOrderBy,
+  selected,
+  setSelected,
+  page,
+  setPage,
+  rowsPerPage,
+  setRowsPerPage,
+  dense,
+  setDense,
+  id, // dynamic unique identifier, e.g., "uid"
+}: EnhancedTableProps<T>) {
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
-    property: keyof Data
+    property: keyof T
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -225,19 +223,19 @@ export default function EnhancedTable<T>(props: EnhancedTableProps) {
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = rows.map((n) => n.id);
+      const newSelected = rows.map((row) => row[id] as number);
       setSelected(newSelected);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected: readonly number[] = [];
+  const handleClick = (event: React.MouseEvent<unknown>, rowId: number) => {
+    const selectedIndex = selected.indexOf(rowId);
+    let newSelected: number[] = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
+      newSelected = newSelected.concat(selected, rowId);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -255,9 +253,7 @@ export default function EnhancedTable<T>(props: EnhancedTableProps) {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -266,49 +262,37 @@ export default function EnhancedTable<T>(props: EnhancedTableProps) {
     setDense(event.target.checked);
   };
 
-  // Avoid a layout jump when reaching the last page with empty rows.
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
-
-  const visibleRows = React.useMemo(
-    () =>
-      [...rows]
-        .sort(getComparator(order, orderBy))
-        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [order, orderBy, page, rowsPerPage]
-  );
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
         <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
-          <Table
-            sx={{ minWidth: 750 }}
-            aria-labelledby="tableTitle"
-            size={dense ? "small" : "medium"}
-          >
+          <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle" size={dense ? "small" : "medium"}>
             <EnhancedTableHead
               numSelected={selected.length}
               order={order}
-              orderBy={orderBy}
+              orderBy={orderBy as string}
+              headCells={headCells}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
               rowCount={rows.length}
             />
             <TableBody>
-              {visibleRows.map((row, index) => {
-                const isItemSelected = selected.includes(row.id);
+              {rows.map((row, index) => {
+                const rowId = row[id] as number;
+                const isItemSelected = selected.includes(rowId);
                 const labelId = `enhanced-table-checkbox-${index}`;
 
                 return (
                   <TableRow
                     hover
-                    onClick={(event) => handleClick(event, row.id)}
+                    onClick={(event) => handleClick(event, rowId)}
                     role="checkbox"
                     aria-checked={isItemSelected}
                     tabIndex={-1}
-                    key={row.id}
+                    key={rowId}
                     selected={isItemSelected}
                     sx={{ cursor: "pointer" }}
                   >
@@ -316,38 +300,33 @@ export default function EnhancedTable<T>(props: EnhancedTableProps) {
                       <Checkbox
                         color="primary"
                         checked={isItemSelected}
-                        inputProps={{
-                          "aria-labelledby": labelId,
-                        }}
+                        inputProps={{ "aria-labelledby": labelId }}
                       />
                     </TableCell>
-                    <TableCell
-                      component="th"
-                      id={labelId}
-                      scope="row"
-                      padding="none"
-                    >
-                      {row.name}
-                    </TableCell>
-                    <TableCell align="right">{row.calories}</TableCell>
-                    <TableCell align="right">{row.fat}</TableCell>
-                    <TableCell align="right">{row.carbs}</TableCell>
-                    <TableCell align="right">{row.protein}</TableCell>
+
+                    {/* Map all headCells dynamically */}
+                    {headCells.map((cell) => (
+                      <TableCell
+                        key={String(cell.id)}
+                        align={cell.numeric ? "right" : "left"}
+                        padding={cell.disablePadding ? "none" : "normal"}
+                      >
+                        {row[cell.id]}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 );
               })}
+
               {emptyRows > 0 && (
-                <TableRow
-                  style={{
-                    height: (dense ? 33 : 53) * emptyRows,
-                  }}
-                >
-                  <TableCell colSpan={6} />
+                <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
+                  <TableCell colSpan={headCells.length + 1} />
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
+
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
@@ -358,6 +337,7 @@ export default function EnhancedTable<T>(props: EnhancedTableProps) {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+
       <FormControlLabel
         control={<Switch checked={dense} onChange={handleChangeDense} />}
         label="Dense padding"
