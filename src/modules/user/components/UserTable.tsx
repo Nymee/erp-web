@@ -1,12 +1,11 @@
-import EnhancedTable from "../../../shared/components/Table"
+import EnhancedTable from "../../../shared/components/Table";
 
-const UserTable=()=>{
-    return(
-        <div>
-            <EnhancedTable></EnhancedTable>
-        </div>
-    )
-}
-
+const UserTable = () => {
+  return (
+    <div>
+      <EnhancedTable></EnhancedTable>
+    </div>
+  );
+};
 
 export default UserTable;
