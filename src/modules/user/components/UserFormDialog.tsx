@@ -31,12 +31,19 @@ const UserFormDialog: React.FC<UserFormDialogProps> = ({
   onClose,
   onSubmit,
 }) => {
+  type FormValues = {
+    name: string;
+    email: string;
+    mobile: string;
+    role: "SAU" | "SE" | "MG" | "ADMIN";
+  };
+
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm({
+  } = useForm<FormValues>({
     resolver: yupResolver(createUserSchema),
     defaultValues: {
       name: "",
