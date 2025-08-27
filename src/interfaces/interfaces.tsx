@@ -4,10 +4,17 @@
     label: string;
     numeric: boolean;
   }
-
-  export interface UserData {
-    uid: number;
-    role: string;
-    email: string;  
-    name: string;
-  }
+export interface User {
+  _id: string; 
+  name: string;
+  email: string;
+  mobile: string;
+  role: "SAU" | "SE" | "MG" | "ADMIN"; 
+  branchId: string; 
+  companyId: string; 
+  password?: string;
+  temp_password?: string; // optional if not always present
+  createdAt: string; 
+  updatedAt: string; 
+  __v: number;
+}
