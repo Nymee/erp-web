@@ -3,7 +3,7 @@ import type { SignUp } from "../../../interfaces/interfaces";
 import authService from "../services/authService";
 import { useState } from "react";
 
-const SignUp = () => {
+const SignUpPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const onSubmit = async (data: SignUp) => {
@@ -24,3 +24,5 @@ const SignUp = () => {
     </div>
   );
 };
+
+export default SignUpPage;
