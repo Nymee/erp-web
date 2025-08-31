@@ -25,10 +25,18 @@ const UserPage = () => {
   const handleAddUser = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
 
-  const handleCreateUser = (data: any) => {
-    console.log("New User Created:", data);
-    // TODO: Add API call or update state logic here
+  const handleCreateUser = async (data: any) => {
+
+    try{
+    const res = await userService.createUsers(data);
+    await fetchUsers();
+
+    }catch(err){
+        console.error("Failed to create user:", err);
+    }finally{
     setOpenDialog(false);
+
+    }
   };
 
   async function fetchUsers() {
@@ -38,7 +46,7 @@ const UserPage = () => {
 
   useEffect(() => {
     fetchUsers();
-  });
+  }, []);
   return (
     <div>
       <UserFilterAdd
