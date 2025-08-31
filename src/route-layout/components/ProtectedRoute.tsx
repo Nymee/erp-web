@@ -1,28 +1,23 @@
-import { type ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 interface ProtectedRouteProps {
-    children: ReactNode,
-    allowedRoles: string[]
+  allowedRoles: string[];
 }
 
-const ProtectedRoute = ({ allowedRoles, children}: ProtectedRouteProps) => {
+const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const token = localStorage.getItem("token");
+  const role = token ? JSON.parse(token).role : null;
 
-    const token = localStorage.getItem("token");
-    const role = token? JSON.parse(token).role :null;
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-
-    if(!token){
-        return <Navigate to = "/login" replace/>
-    }
-
-    if(allowedRoles.includes(role)){
-        return children;
-    }
-    else{
-        //return unauthorised page
-    }
+  if (role && allowedRoles.includes(role)) {
+        return <Outlet />;
+  } else {
+    return <Navigate to="/unauthorized" replace />;
+    // Or return a custom unauthorized component instead
+  }
 };
-
 
 export default ProtectedRoute;
