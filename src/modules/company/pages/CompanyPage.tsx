@@ -1,14 +1,21 @@
 import EnhancedTable from "../../../shared/components/Table";
-import type { HeadCell } from "../../../interfaces/interfaces";
+import type {
+  CompanyStatusUpdate,
+  HeadCell,
+} from "../../../interfaces/interfaces";
 import { useEffect, useState } from "react";
 import companyService from "../services/companyService";
 import { IconButton } from "@mui/material";
+import ConfirmationPopup from "../../../shared/components/ConfirmationPopup";
+import type { approveCompany } from "../../../interfaces/interfaces";
 interface Company {
   id: number;
   name: string;
   email_id: string;
   mobile: string;
 }
+
+type ActionType = "approve" | "reject" | null;
 
 const CompanyPage = () => {
   const headCells: HeadCell<Company>[] = [
@@ -26,16 +33,51 @@ const CompanyPage = () => {
   const [search, setSearch] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [message, setMessage] = useState("");
+  const [title, setTitle] = useState("");
+  const [action, setAction] = useState<ActionType>(null);
+  const [selectedRow, setSelectedRow] = useState<Company | null>(null);
 
   async function fetchCompanies() {
     const fetchedCompanies = await companyService.getCompanies();
     setCompanies(fetchedCompanies);
   }
 
-  const handleApprove = async (id: number) =>
-    useEffect(() => {
-      fetchCompanies();
-    }, []);
+  const getProps = (status: string | null) => {
+    if (status == "approve") {
+      return {
+        title: "Reject Company",
+        message: "Are you sure you want to reject this company?",
+      };
+    } else if (status == "reject") {
+      return {
+        title: "Approve Company",
+        message: "Are you sure you want to approve this company?",
+      };
+    }
+  };
+
+  const handleConfirm = () => {
+    let body = null;
+    if (action == "approve") {
+      body = {
+        isVerified: "approved" as approveCompany,
+      };
+    } else if (action == "reject") {
+      body = {
+        isVerified: "rejected" as approveCompany,
+      };
+    }
+    if (selectedRow && body) {
+      const res = companyService.statusUpdateCompany(selectedRow.id, body);
+    } else {
+      console.error("selectedRow or body is null or undefined");
+    }
+  };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
 
   return (
     <div className="p-4">
@@ -67,17 +109,40 @@ const CompanyPage = () => {
         rows={companies}
         headCells={headCells}
         id="id"
-        //     renderAction={(row) => (
-        //   <div className="flex gap-2">
-        //     <IconButton color="success" onClick={() => handleApprove(row)}>
-        //       ✔
-        //     </IconButton>
-        //     <IconButton color="error" onClick={() => handleReject(row)}>
-        //       ✖
-        //     </IconButton>
-        //   </div>
-        // )}
+        renderAction={(row) => (
+          <div className="flex gap-2">
+            <IconButton
+              color="success"
+              onClick={() => {
+                setSelectedRow(row);
+                setAction("approve");
+                setOpenDialog(true);
+              }}
+            >
+              ✔
+            </IconButton>
+            <IconButton
+              color="error"
+              onClick={() => {
+                setSelectedRow(row);
+                setAction("reject");
+                setOpenDialog(true);
+              }}
+            >
+              ✖
+            </IconButton>
+          </div>
+        )}
       />
+
+      <ConfirmationPopup
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        message={message}
+        title={title}
+        onConfirm={handleConfirm}
+        {...getProps(action)}
+      ></ConfirmationPopup>
     </div>
   );
 };
