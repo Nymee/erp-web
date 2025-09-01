@@ -5,7 +5,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("decodedToken");
   const role = token ? JSON.parse(token).role : null;
 
   if (!token) {
@@ -13,7 +13,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (role && allowedRoles.includes(role)) {
-        return <Outlet />;
+    return <Outlet />;
   } else {
     return <Navigate to="/unauthorized" replace />;
     // Or return a custom unauthorized component instead
