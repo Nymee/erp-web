@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import UserFilterAdd from "../components/UserFilterAdd";
 import UserFormDialog from "../components/UserFormDialog";
 import userService from "../services/userService";
+import { IconButton } from "@mui/material";
 const UserPage = () => {
   const headCells: HeadCell<User>[] = [
     { id: "name", numeric: false, disablePadding: false, label: "Name" },
@@ -25,10 +26,15 @@ const UserPage = () => {
   const handleAddUser = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
 
-  const handleCreateUser = (data: any) => {
-    console.log("New User Created:", data);
-    // TODO: Add API call or update state logic here
-    setOpenDialog(false);
+  const handleCreateUser = async (data: any) => {
+    try {
+      const res = await userService.createUsers(data);
+      await fetchUsers();
+    } catch (err) {
+      console.error("Failed to create user:", err);
+    } finally {
+      setOpenDialog(false);
+    }
   };
 
   async function fetchUsers() {
@@ -38,7 +44,7 @@ const UserPage = () => {
 
   useEffect(() => {
     fetchUsers();
-  });
+  }, []);
   return (
     <div>
       <UserFilterAdd

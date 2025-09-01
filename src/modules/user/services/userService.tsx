@@ -8,6 +8,7 @@ const getUsers = () => {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
+            Authorisation: `Bearer ${localStorage.getItem("token")}`
         },
     }).then(res => {
         if(!res.ok){
@@ -22,13 +23,15 @@ const getUsers = () => {
 };
 
 
-const postUsers = (data:any) => {
+const createUsers = (data:any) => {
 
-    const url = `${apiUrl}/users`;
+    const url = `${apiUrl}/api/users`;
     const users = fetch(url,{
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            Authorisation: `Bearer ${localStorage.getItem("token")}`
+
         },
         body: JSON.stringify(data)
     }).then(res => {
@@ -41,4 +44,4 @@ const postUsers = (data:any) => {
     })
 }
 
-export default {getUsers, postUsers};
+export default {getUsers, createUsers};

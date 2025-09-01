@@ -62,25 +62,26 @@ interface EnhancedTableProps<T> {
   setOrder: React.Dispatch<React.SetStateAction<"asc" | "desc">>;
   orderBy: keyof T;
   setOrderBy: React.Dispatch<React.SetStateAction<keyof T>>;
-  
+
   selected: number[];
   setSelected: React.Dispatch<React.SetStateAction<number[]>>;
-  
+
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
-  
+
   dense: boolean;
   setDense: React.Dispatch<React.SetStateAction<boolean>>;
-  
+
   rowsPerPage: number;
   setRowsPerPage: React.Dispatch<React.SetStateAction<number>>;
 
   rows: T[];
   headCells: HeadCell<T>[];
   id: string;
+  renderAction?: (row: T) => React.ReactNode;
 }
 
-interface EnhancedProps<T>{
+interface EnhancedProps<T> {
   numSelected: number;
   onRequestSort: (event: React.MouseEvent<unknown>, property: keyof T) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -88,11 +89,20 @@ interface EnhancedProps<T>{
   orderBy: string;
   rowCount: number;
   headCells: HeadCell<T>[];
+  renderAction?: (row: T) => React.ReactNode;
 }
 
 function EnhancedTableHead<T>(props: EnhancedProps<T>) {
-  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort, headCells } =
-    props;
+  const {
+    onSelectAllClick,
+    order,
+    orderBy,
+    numSelected,
+    rowCount,
+    onRequestSort,
+    headCells,
+    renderAction,
+  } = props;
 
   const createSortHandler =
     (property: keyof T) => (event: React.MouseEvent<unknown>) => {
@@ -134,6 +144,8 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
             </TableSortLabel>
           </TableCell>
         ))}
+
+        {renderAction && <TableCell align="center">Action</TableCell>}
       </TableRow>
     </TableHead>
   );
@@ -210,8 +222,8 @@ export default function EnhancedTable<T extends Record<string, any>>({
   dense,
   setDense,
   id, // dynamic unique identifier, e.g., "uid"
+  renderAction,
 }: EnhancedTableProps<T>) {
-
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
     property: keyof T
@@ -253,7 +265,9 @@ export default function EnhancedTable<T extends Record<string, any>>({
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -262,14 +276,19 @@ export default function EnhancedTable<T extends Record<string, any>>({
     setDense(event.target.checked);
   };
 
-  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  const emptyRows =
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
         <EnhancedTableToolbar numSelected={selected.length} />
         <TableContainer>
-          <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle" size={dense ? "small" : "medium"}>
+          <Table
+            sx={{ minWidth: 750 }}
+            aria-labelledby="tableTitle"
+            size={dense ? "small" : "medium"}
+          >
             <EnhancedTableHead
               numSelected={selected.length}
               order={order}
@@ -281,6 +300,7 @@ export default function EnhancedTable<T extends Record<string, any>>({
             />
             <TableBody>
               {rows.map((row, index) => {
+                //for each object, i have a checkbox and the actual value. we map thru row and for each row we map thru headcells
                 const rowId = row[id] as number;
                 const isItemSelected = selected.includes(rowId);
                 const labelId = `enhanced-table-checkbox-${index}`;
@@ -314,6 +334,9 @@ export default function EnhancedTable<T extends Record<string, any>>({
                         {row[cell.id]}
                       </TableCell>
                     ))}
+                    {renderAction && (
+                      <TableCell align="center">{renderAction(row)}</TableCell>
+                    )}
                   </TableRow>
                 );
               })}
