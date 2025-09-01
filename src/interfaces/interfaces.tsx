@@ -32,3 +32,9 @@ export interface SignUp {
   user_email: string;
   user_mobile: string;
 }
+
+export type approveCompany = "approved" | "rejected" | "";
+
+export interface CompanyStatusUpdate {
+  isVerified: approveCompany;
+}
