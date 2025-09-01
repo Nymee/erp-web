@@ -1,34 +1,40 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "./modules/sidebar/Sidebar";
-import UserPage from "./modules/user/pages/UserPage";
 import LoginPage from "./modules/auth/pages/LoginPage";
 import SignUpPage from "./modules/auth/pages/SignUpPage";
+import UserPage from "./modules/user/pages/UserPage";
+import ProtectedRoute from "./route-layout/components/ProtectedRoute";
+import ClientPage from "./modules/client/pages/ClientPage";
 
-function App() {
+export default function App() {
+  const location = useLocation();
+  const hideSidebar =
+    location.pathname === "/login" || location.pathname === "/sign-up";
+
   return (
-    <Router>
-      <div className="flex">
-        <div className="items-center justify-center">
-          <Routes>
+    <div className="flex min-h-screen">
+      {!hideSidebar && (
+        <div className="w-64 bg-blue-800 text-white">
+          <Sidebar />
+        </div>
+      )}
+      <div className="flex-1 p-4">
+        <Routes>
+          <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
+            <Route path="/user" element={<UserPage />} />
+            <Route path="/client" element={<ClientPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+            {/* <Route path="/company" element={<CompanyPage />} /> */}
+          </Route>
+
+          <Route path="/">
             <Route path="/sign-up" element={<SignUpPage />} />
             <Route path="/login" element={<LoginPage />} />
-          </Routes>
-        </div>
-
-        {/* Sidebar (always visible) */}
-
-        {/* Page Content */}
-        <div className="flex-1 p-4">
-          <Routes>
-            <Sidebar />
-
-            <Route path="/user" element={<UserPage />} />
-            {/* add more routes here */}
-          </Routes>
-        </div>
+          </Route>
+        </Routes>
       </div>
-    </Router>
+    </div>
   );
 }
-
-export default App;
