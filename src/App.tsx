@@ -8,7 +8,8 @@ import ClientPage from "./modules/client/pages/ClientPage";
 
 export default function App() {
   const location = useLocation();
-  const hideSidebar = location.pathname === "/login" || location.pathname === "/sign-up";
+  const hideSidebar =
+    location.pathname === "/login" || location.pathname === "/sign-up";
 
   return (
     <div className="flex min-h-screen">
@@ -19,19 +20,16 @@ export default function App() {
       )}
       <div className="flex-1 p-4">
         <Routes>
-
-          <Route element = {<ProtectedRoute allowedRoles={["SAU", "SALES"]}/>}>
-                <Route path="/user" element={<UserPage />} />
-                <Route path="/client" element={<ClientPage />} />
+          <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
+            <Route path="/user" element={<UserPage />} />
+            <Route path="/client" element={<ClientPage />} />
           </Route>
 
-           <Route element = {<ProtectedRoute allowedRoles={["ADMIN"]}/>}>
-                <Route path="/company" element={<CompanyPage />} />
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+            {/* <Route path="/company" element={<CompanyPage />} /> */}
           </Route>
-         
 
-
-          <Route path = '/'>
+          <Route path="/">
             <Route path="/sign-up" element={<SignUpPage />} />
             <Route path="/login" element={<LoginPage />} />
           </Route>
