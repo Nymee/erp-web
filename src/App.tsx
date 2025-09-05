@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Sidebar from "./modules/sidebar/Sidebar";
 import LoginPage from "./modules/auth/pages/LoginPage";
 import SignUpPage from "./modules/auth/pages/SignUpPage";
@@ -23,6 +23,7 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
             <Route path="/user" element={<UserPage />} />
             <Route path="/client" element={<ClientPage />} />
+            <Route path="/" element={<Navigate to="/user" replace />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>

@@ -1,5 +1,6 @@
 import { Home, Users, Building2, LogOut } from "lucide-react";
 import { Button } from "@mui/material";
+import { Link } from "react-router-dom";
 
 export default function Sidebar() {
   return (
@@ -9,10 +10,13 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 space-y-2">
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 cursor-pointer text-gray-700 hover:text-blue-600 transition">
+        <Link
+          to="/user"
+          className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 cursor-pointer text-gray-700 hover:text-blue-600 transition"
+        >
           <Home size={20} />
-          <span className="font-medium">Dashboard</span>
-        </div>
+          <span className="font-medium">User</span>
+        </Link>
 
         <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 cursor-pointer text-gray-700 hover:text-blue-600 transition">
           <Building2 size={20} />
