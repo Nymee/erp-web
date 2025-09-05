@@ -6,7 +6,7 @@ const getUsers = () => {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorisation: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
   })
     .then((res) => {
@@ -28,7 +28,7 @@ const createUsers = (data: any) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorisation: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
     body: JSON.stringify(data),
   })
