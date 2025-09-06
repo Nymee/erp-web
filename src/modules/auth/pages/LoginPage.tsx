@@ -1,6 +1,6 @@
 import { useState } from "react";
 import LoginForm from "../components/LoginForm";
-import  {jwtDecode}  from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import type { Login } from "../../../interfaces/interfaces";
 import authService from "../services/authService";
 const LoginPage = () => {
@@ -18,7 +18,7 @@ const LoginPage = () => {
       const decodedToken = jwtDecode(data.token);
       localStorage.setItem("token", data.token);
       localStorage.setItem("decodedToken", JSON.stringify(decodedToken));
-      window.location.href = "/dashboard";
+      window.location.href = "/user";
     } catch (err: any) {
       setError(err.message);
     } finally {

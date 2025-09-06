@@ -105,7 +105,6 @@ const CompanyPage = () => {
         dense={dense}
         setDense={setDense}
         rowsPerPage={rowsPerPage}
-        setRowsPerPage={setRowsPerPage}
         rows={companies}
         headCells={headCells}
         id="id"

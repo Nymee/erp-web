@@ -72,7 +72,6 @@ const ClientPage = () => {
         dense={dense}
         setDense={setDense}
         rowsPerPage={rowsPerPage}
-        setRowsPerPage={setRowsPerPage}
         rows={clients}
         headCells={headCells}
         id="id"
