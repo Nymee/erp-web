@@ -33,6 +33,15 @@ export interface SignUp {
   user_mobile: string;
 }
 
+export interface UserQuery {
+  page: number;              
+  limit: number;
+  order: "asc" | "desc";
+  orderBy: keyof User;
+  search: string;
+}
+
+
 export type approveCompany = "approved" | "rejected" | "";
 
 export interface CompanyStatusUpdate {

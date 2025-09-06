@@ -1,5 +1,6 @@
 import { Home, Users, Building2, LogOut } from "lucide-react";
 import { Button } from "@mui/material";
+import { NavLink } from "react-router-dom";
 
 export default function Sidebar() {
   return (
@@ -9,21 +10,39 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 space-y-2">
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 cursor-pointer text-gray-700 hover:text-blue-600 transition">
-          <Home size={20} />
-          <span className="font-medium">Dashboard</span>
-        </div>
+      <NavLink
+        to="/user"
+        className={({ isActive }) =>
+          `flex items-center gap-3 p-2 rounded-lg transition cursor-pointer
+           ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`
+        }
+      >
+        <Home size={20} />
+        <span className="font-medium">User</span>
+      </NavLink>
 
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 cursor-pointer text-gray-700 hover:text-blue-600 transition">
-          <Building2 size={20} />
-          <span className="font-medium">Company</span>
-        </div>
+      <NavLink
+        to="/company"
+        className={({ isActive }) =>
+          `flex items-center gap-3 p-2 rounded-lg transition cursor-pointer
+           ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`
+        }
+      >
+        <Building2 size={20} />
+        <span className="font-medium">Company</span>
+      </NavLink>
 
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-blue-50 cursor-pointer text-gray-700 hover:text-blue-600 transition">
-          <Users size={20} />
-          <span className="font-medium">Clients</span>
-        </div>
-      </nav>
+      <NavLink
+        to="/users"
+        className={({ isActive }) =>
+          `flex items-center gap-3 p-2 rounded-lg transition cursor-pointer
+           ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`
+        }
+      >
+        <Users size={20} />
+        <span className="font-medium">Clients</span>
+      </NavLink>
+    </nav>
 
       {/* Logout at bottom */}
       <div className="p-4">

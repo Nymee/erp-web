@@ -6,7 +6,6 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import Toolbar from "@mui/material/Toolbar";
@@ -21,64 +20,27 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
 import type { HeadCell } from "../../interfaces/interfaces";
+import { Pagination } from "@mui/material";
 
 type Order = "asc" | "desc";
 
-// const headCells: readonly HeadCell[] = [
-//   {
-//     id: "name",
-//     numeric: false,
-//     disablePadding: true,
-//     label: "Dessert (100g serving)",
-//   },
-//   {
-//     id: "calories",
-//     numeric: true,
-//     disablePadding: false,
-//     label: "Calories",
-//   },
-//   {
-//     id: "fat",
-//     numeric: true,
-//     disablePadding: false,
-//     label: "Fat (g)",
-//   },
-//   {
-//     id: "carbs",
-//     numeric: true,
-//     disablePadding: false,
-//     label: "Carbs (g)",
-//   },
-//   {
-//     id: "protein",
-//     numeric: true,
-//     disablePadding: false,
-//     label: "Protein (g)",
-//   },
-// ];
-
 interface EnhancedTableProps<T> {
   order: Order;
-  setOrder: React.Dispatch<React.SetStateAction<"asc" | "desc">>;
+  setOrder: (order: Order) => void;
   orderBy: keyof T;
-  setOrderBy: React.Dispatch<React.SetStateAction<keyof T>>;
-
+  setOrderBy: (orderBy: keyof T) => void;
   selected: number[];
   setSelected: React.Dispatch<React.SetStateAction<number[]>>;
-
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
-
+  setPage: (page: number) => void;
   dense: boolean;
   setDense: React.Dispatch<React.SetStateAction<boolean>>;
-
   rowsPerPage: number;
-  setRowsPerPage: React.Dispatch<React.SetStateAction<number>>;
-
   rows: T[];
   headCells: HeadCell<T>[];
   id: string;
   renderAction?: (row: T) => React.ReactNode;
+  totalCount?: number;
 }
 
 interface EnhancedProps<T> {
@@ -119,10 +81,10 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
             inputProps={{
-              "aria-label": "select all desserts",
+              "aria-label": "select all items",
             }}
           />
-        </TableCell>
+        </TableCell>      
         {headCells.map((headCell) => (
           <TableCell
             key={String(headCell.id)}
@@ -144,15 +106,16 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
             </TableSortLabel>
           </TableCell>
         ))}
-
         {renderAction && <TableCell align="center">Action</TableCell>}
       </TableRow>
     </TableHead>
   );
 }
+
 interface EnhancedTableToolbarProps {
   numSelected: number;
 }
+
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const { numSelected } = props;
   return (
@@ -187,7 +150,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           id="tableTitle"
           component="div"
         >
-          Nutrition
+          Users
         </Typography>
       )}
       {numSelected > 0 ? (
@@ -206,6 +169,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     </Toolbar>
   );
 }
+
 export default function EnhancedTable<T extends Record<string, any>>({
   rows,
   headCells,
@@ -218,11 +182,11 @@ export default function EnhancedTable<T extends Record<string, any>>({
   page,
   setPage,
   rowsPerPage,
-  setRowsPerPage,
   dense,
   setDense,
-  id, // dynamic unique identifier, e.g., "uid"
+  id,
   renderAction,
+  totalCount = 0,
 }: EnhancedTableProps<T>) {
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -235,7 +199,7 @@ export default function EnhancedTable<T extends Record<string, any>>({
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = rows.map((row) => row[id] as number);
+      const newSelected = rows?.map((row) => row[id] as number);
       setSelected(newSelected);
       return;
     }
@@ -261,23 +225,12 @@ export default function EnhancedTable<T extends Record<string, any>>({
     setSelected(newSelected);
   };
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDense(event.target.checked);
   };
 
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  // Calculate total pages based on totalCount and fixed rowsPerPage
+  const totalPages = Math.ceil(totalCount / rowsPerPage);
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -296,11 +249,11 @@ export default function EnhancedTable<T extends Record<string, any>>({
               headCells={headCells}
               onSelectAllClick={handleSelectAllClick}
               onRequestSort={handleRequestSort}
-              rowCount={rows.length}
+              rowCount={rows?.length}
+              renderAction={renderAction}
             />
             <TableBody>
-              {rows.map((row, index) => {
-                //for each object, i have a checkbox and the actual value. we map thru row and for each row we map thru headcells
+              {rows?.map((row, index) => {
                 const rowId = row[id] as number;
                 const isItemSelected = selected.includes(rowId);
                 const labelId = `enhanced-table-checkbox-${index}`;
@@ -324,7 +277,6 @@ export default function EnhancedTable<T extends Record<string, any>>({
                       />
                     </TableCell>
 
-                    {/* Map all headCells dynamically */}
                     {headCells.map((cell) => (
                       <TableCell
                         key={String(cell.id)}
@@ -340,25 +292,21 @@ export default function EnhancedTable<T extends Record<string, any>>({
                   </TableRow>
                 );
               })}
-
-              {emptyRows > 0 && (
-                <TableRow style={{ height: (dense ? 33 : 53) * emptyRows }}>
-                  <TableCell colSpan={headCells.length + 1} />
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </TableContainer>
-
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
+        
+        {/* Pagination moved outside TableContainer and improved */}
+        <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+          <Pagination
+            count={totalPages}
+            page={page + 1} // Convert from 0-based to 1-based
+            onChange={(_, newPage) => setPage(newPage - 1)} // Convert back to 0-based
+            color="primary"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
       </Paper>
 
       <FormControlLabel
