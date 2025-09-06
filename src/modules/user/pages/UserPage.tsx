@@ -1,10 +1,10 @@
 import EnhancedTable from "../../../shared/components/Table";
-import type { HeadCell, User } from "../../../interfaces/interfaces";
+import type { HeadCell, User, UserQuery } from "../../../interfaces/interfaces";
 import { useEffect, useState } from "react";
 import UserFilterAdd from "../components/UserFilterAdd";
 import UserFormDialog from "../components/UserFormDialog";
 import userService from "../services/userService";
-import { IconButton } from "@mui/material";
+
 const UserPage = () => {
   const headCells: HeadCell<User>[] = [
     { id: "name", numeric: false, disablePadding: false, label: "Name" },
@@ -13,22 +13,44 @@ const UserPage = () => {
     { id: "mobile", numeric: false, disablePadding: false, label: "Mobile" },
   ];
 
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
-  const [orderBy, setOrderBy] = useState<keyof User>("name");
+  // Single source of truth for query params
+  const [query, setQuery] = useState<UserQuery>({
+    page: 0,                // 0-based
+    limit: 10,              // fixed at 10
+    order: "asc",
+    orderBy: "name",
+    search: "",
+  });
+
   const [selected, setSelected] = useState<number[]>([]);
-  const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [search, setSearch] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [totalCount, setTotalCount] = useState(0); // backend total
+
+  // Handlers
+  const handlePageChange = (newPage: number) => {
+    setQuery((prev) => ({ ...prev, page: newPage }));
+  };
+
+const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
+  setQuery({
+    ...query,
+    order,
+    orderBy,
+  });
+};
+
+  const handleSearchChange = (value: string) => {
+    setQuery((prev) => ({ ...prev, page: 0, search: value }));
+  };
 
   const handleAddUser = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
 
   const handleCreateUser = async (data: any) => {
     try {
-      const res = await userService.createUsers(data);
+      await userService.createUsers(data);
       await fetchUsers();
     } catch (err) {
       console.error("Failed to create user:", err);
@@ -38,36 +60,39 @@ const UserPage = () => {
   };
 
   async function fetchUsers() {
-    const fetchedUsers = await userService.getUsers();
-    setUsers(fetchedUsers);
+    // Pass query to backend
+    const res = await userService.getUsers(query);
+    setUsers(res.data);           // your backend should return paginated data
+    setTotalCount(res.total);     // and the total count of users
   }
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [query]);
+
   return (
     <div>
       <UserFilterAdd
-        search={search}
-        setSearch={setSearch}
+        search={query.search}
+        setSearch={handleSearchChange}
         onAddUser={handleAddUser}
       />
       <EnhancedTable<User>
-        order={order}
-        setOrder={setOrder}
-        orderBy={orderBy}
-        setOrderBy={setOrderBy}
+        order={query.order}
+        setOrder={(o) => setQuery((prev) => ({ ...prev, order: o }))}
+        orderBy={query.orderBy}
+        setOrderBy={(ob) => setQuery((prev) => ({ ...prev, orderBy: ob }))}
         selected={selected}
         setSelected={setSelected}
-        page={page}
-        setPage={setPage}
+        page={query.page}
+        setPage={handlePageChange}
         dense={dense}
         setDense={setDense}
-        rowsPerPage={rowsPerPage}
-        setRowsPerPage={setRowsPerPage}
+        rowsPerPage={query.limit} // fixed at 10
         rows={users}
         headCells={headCells}
-        id="uid"
+        id="_id"
+        totalCount={totalCount}   // pass down for Pagination
       />
       <UserFormDialog
         open={openDialog}

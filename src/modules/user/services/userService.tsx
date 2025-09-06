@@ -1,7 +1,9 @@
+import type { UserQuery } from "../../../interfaces/interfaces";
+
 const apiUrl = import.meta.env.VITE_API_URL;
 
-const getUsers = () => {
-  const url = `${apiUrl}/api/user`;
+const getUsers = (query: UserQuery) => {
+  const url = `${apiUrl}/api/user?page=${query.page + 1}&limit=${query.limit}&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
   const users = fetch(url, {
     method: "GET",
     headers: {

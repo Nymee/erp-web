@@ -3,8 +3,8 @@ import { Plus } from "lucide-react";
 
 interface UserFilterProps {
   search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-  onAddUser?: () => void;
+setSearch: (value: string) => void;  
+onAddUser?: () => void;
 }
 
 const UserFilterAdd = ({ search, setSearch, onAddUser }: UserFilterProps) => {
