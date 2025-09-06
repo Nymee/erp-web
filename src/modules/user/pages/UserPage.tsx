@@ -13,10 +13,9 @@ const UserPage = () => {
     { id: "mobile", numeric: false, disablePadding: false, label: "Mobile" },
   ];
 
-  // Single source of truth for query params
   const [query, setQuery] = useState<UserQuery>({
-    page: 0,                // 0-based
-    limit: 10,              // fixed at 10
+    page: 0,                
+    limit: 10,              
     order: "asc",
     orderBy: "name",
     search: "",
