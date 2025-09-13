@@ -1,5 +1,5 @@
 import EnhancedTable from "../../../shared/components/Table";
-import type { HeadCell } from "../../../interfaces/interfaces";
+import type { BasicQuery, HeadCell } from "../../../interfaces/interfaces";
 import { useEffect, useState } from "react";
 import ClientFilterAdd from "../components/ClientFIlterAdd";
 import ClientFormDialog from "../components/ClientFormDialog";
@@ -13,7 +13,24 @@ interface Client {
   address: string;
 }
 
-const ClientPage = () => {
+
+
+  
+
+  const ClientPage = () => {
+    const [selected, setSelected] = useState<number[]>([]);
+  const [dense, setDense] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [totalCount, setTotalCount] = useState(0); // backend total
+
+  const [query, setQuery] = useState<BasicQuery>({
+      page: 0,                
+      limit: 10,              
+      order: "asc",
+      orderBy: "name",
+      search: "",
+    });
   const headCells: HeadCell<Client>[] = [
     { id: "name", numeric: false, disablePadding: false, label: "Name" },
     { id: "email_id", numeric: false, disablePadding: false, label: "Email" },
@@ -21,22 +38,20 @@ const ClientPage = () => {
     { id: "address", numeric: false, disablePadding: false, label: "Address" },
   ];
 
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
-  const [orderBy, setOrderBy] = useState<keyof Client>("name");
-  const [selected, setSelected] = useState<number[]>([]);
-  const [page, setPage] = useState(0);
-  const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [search, setSearch] = useState("");
-  const [openDialog, setOpenDialog] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
+  const handleSearchChange = (value: string) => {
+    setQuery((prev) => ({ ...prev, page: 0, search: value }));
+  };
+    const handlePageChange = (newPage: number) => {
+    setQuery((prev) => ({ ...prev, page: newPage }));
+  };
+
 
   const handleAddClient = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
 
   const handleCreateClient = async (data: any) => {
     try {
-      const res = await clientService.createClient(data);
+      await clientService.createClient(data);
       fetchClients();
     } catch (err) {
       console.error("Failed to create client:", err);
@@ -45,36 +60,41 @@ const ClientPage = () => {
   };
 
   async function fetchClients() {
-    const fetchedClients = await clientService.getClients();
+    const fetchedClients = await clientService.getClients(query);
     setClients(fetchedClients);
+    setTotalCount(fetchedClients.total); 
   }
+
+    // Handlers
+
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [query]);
 
   return (
     <div>
       <ClientFilterAdd
-        search={search}
-        setSearch={setSearch}
+          search={query.search}
+        setSearch={handleSearchChange}
         onAddClient={handleAddClient}
       />
       <EnhancedTable<Client>
-        order={order}
-        setOrder={setOrder}
-        orderBy={orderBy}
-        setOrderBy={setOrderBy}
+        order={query.order}
+        setOrder={(o) => setQuery((prev) => ({ ...prev, order: o }))}
+        orderBy={query.orderBy}
+        setOrderBy={(ob) => setQuery((prev) => ({ ...prev, orderBy: ob }))}
         selected={selected}
         setSelected={setSelected}
-        page={page}
-        setPage={setPage}
+        page={query.page}
+        setPage={handlePageChange}
         dense={dense}
         setDense={setDense}
-        rowsPerPage={rowsPerPage}
+        rowsPerPage={query.limit} 
         rows={clients}
         headCells={headCells}
-        id="id"
+        id="_id"
+        totalCount={totalCount}  
       />
       <ClientFormDialog
         open={openDialog}

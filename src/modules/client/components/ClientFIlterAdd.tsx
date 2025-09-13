@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 
 interface ClientFilterProps {
   search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
+  setSearch: (value: string) => void;
   onAddClient?: () => void;
 }
 

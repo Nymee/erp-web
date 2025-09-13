@@ -33,7 +33,7 @@ export default function Sidebar() {
       </NavLink>
 
       <NavLink
-        to="/users"
+        to="/client"
         className={({ isActive }) =>
           `flex items-center gap-3 p-2 rounded-lg transition cursor-pointer
            ${isActive ? "bg-blue-100 text-blue-600" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`
