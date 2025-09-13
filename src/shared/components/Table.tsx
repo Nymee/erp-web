@@ -27,7 +27,7 @@ type Order = "asc" | "desc";
 interface EnhancedTableProps<T> {
   order: Order;
   setOrder: (order: Order) => void;
-  orderBy: keyof T;
+  orderBy: string;
   setOrderBy: (orderBy: keyof T) => void;
   selected: number[];
   setSelected: React.Dispatch<React.SetStateAction<number[]>>;
