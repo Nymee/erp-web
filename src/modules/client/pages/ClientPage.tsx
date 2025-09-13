@@ -15,7 +15,10 @@ interface Client {
 
 
 
-  const [selected, setSelected] = useState<number[]>([]);
+  
+
+  const ClientPage = () => {
+    const [selected, setSelected] = useState<number[]>([]);
   const [dense, setDense] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
@@ -28,8 +31,6 @@ interface Client {
       orderBy: "name",
       search: "",
     });
-
-  const ClientPage = () => {
   const headCells: HeadCell<Client>[] = [
     { id: "name", numeric: false, disablePadding: false, label: "Name" },
     { id: "email_id", numeric: false, disablePadding: false, label: "Email" },
@@ -59,7 +60,7 @@ interface Client {
   };
 
   async function fetchClients() {
-    const fetchedClients = await clientService.getClients();
+    const fetchedClients = await clientService.getClients(query);
     setClients(fetchedClients);
     setTotalCount(fetchedClients.total); 
   }

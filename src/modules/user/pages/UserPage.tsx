@@ -6,6 +6,9 @@ import UserFormDialog from "../components/UserFormDialog";
 import userService from "../services/userService";
 
 
+  
+
+const UserPage = () => {
   const [query, setQuery] = useState<BasicQuery>({
     page: 0,                
     limit: 10,              
@@ -20,8 +23,7 @@ import userService from "../services/userService";
   const [users, setUsers] = useState<User[]>([]);
   const [totalCount, setTotalCount] = useState(0); // backend total
 
-
-const UserPage = () => {
+  
   const headCells: HeadCell<User>[] = [
     { id: "name", numeric: false, disablePadding: false, label: "Name" },
     { id: "role", numeric: false, disablePadding: false, label: "Role" },
