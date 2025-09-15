@@ -27,8 +27,8 @@ type Order = "asc" | "desc";
 interface EnhancedTableProps<T> {
   order: Order;
   setOrder: (order: Order) => void;
-  orderBy: keyof T;
-  setOrderBy: (orderBy: keyof T) => void;
+  orderBy: string;
+  setOrderBy: (orderBy: string) => void;
   selected: number[];
   setSelected: React.Dispatch<React.SetStateAction<number[]>>;
   page: number;
@@ -194,7 +194,7 @@ export default function EnhancedTable<T extends Record<string, any>>({
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
+    setOrderBy(String(property));
   };
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
