@@ -13,7 +13,7 @@ const UserPage = () => {
     { id: "mobile", numeric: false, disablePadding: false, label: "Mobile" },
   ];
 
-  const [query, setQuery] = useState<UserQuery>({
+  const [query, setQuery] = useState<BasicQuer>({
     page: 0,                
     limit: 10,              
     order: "asc",
