@@ -1,81 +1,82 @@
 import EnhancedTable from "../../../shared/components/Table";
-import type { HeadCell, Product, ProductQuery } from "../../../interfaces/interfaces";
+import type { BasicQuery, HeadCell, User } from "../../../interfaces/interfaces";
 import { useEffect, useState } from "react";
-import ProductFilterAdd from "../components/ProductFilterAdd";
-import ProductFormDialog from "../components/ProductFormDialog";
-import productService from "../services/productService";
+import UserFilterAdd from "../components/UserFilterAdd";
+import UserFormDialog from "../components/UserFormDialog";
+import userService from "../services/userService";
 
-const ProductPage = () => {
-  const headCells: HeadCell<Product>[] = [
+const UserPage = () => {
+  const headCells: HeadCell<User>[] = [
     { id: "name", numeric: false, disablePadding: false, label: "Name" },
-    { id: "category", numeric: false, disablePadding: false, label: "Category" },
-    { id: "price", numeric: true, disablePadding: false, label: "Price" },
-    { id: "stock", numeric: true, disablePadding: false, label: "Stock" },
+    { id: "role", numeric: false, disablePadding: false, label: "Role" },
+    { id: "email", numeric: false, disablePadding: false, label: "Email" },
+    { id: "mobile", numeric: false, disablePadding: false, label: "Mobile" },
   ];
 
-  const [query, setQuery] = useState<ProductQuery>({
-    page: 0,
-    limit: 10,
+  const [query, setQuery] = useState<BasicQuery>({
+    page: 0,                
+    limit: 10,              
     order: "asc",
     orderBy: "name",
     search: "",
   });
 
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<number[]>([]);
   const [dense, setDense] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [users, setUsers] = useState<User[]>([]);
+  const [totalCount, setTotalCount] = useState(0); // backend total
 
   // Handlers
   const handlePageChange = (newPage: number) => {
     setQuery((prev) => ({ ...prev, page: newPage }));
   };
 
-  const handleSortChange = (order: "asc" | "desc", orderBy: keyof Product) => {
-    setQuery((prev) => ({
-      ...prev,
-      order,
-      orderBy,
-    }));
-  };
+const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
+  setQuery({
+    ...query,
+    order,
+    orderBy,
+  });
+};
 
   const handleSearchChange = (value: string) => {
     setQuery((prev) => ({ ...prev, page: 0, search: value }));
   };
 
-  const handleAddProduct = () => setOpenDialog(true);
+  const handleAddUser = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
 
-  const handleCreateProduct = async (data: any) => {
+  const handleCreateUser = async (data: any) => {
     try {
-      await productService.createProducts(data);
-      await fetchProducts();
+      await userService.createUsers(data);
+      await fetchUsers();
     } catch (err) {
-      console.error("Failed to create product:", err);
+      console.error("Failed to create user:", err);
     } finally {
       setOpenDialog(false);
     }
   };
 
-  async function fetchProducts() {
-    const res = await productService.getProducts(query);
-    setProducts(res.data);
-    setTotalCount(res.total);
+  async function fetchUsers() {
+    // Pass query to backend
+    const res = await userService.getUsers(query);
+    setUsers(res.data);           // your backend should return paginated data
+    setTotalCount(res.total);     // and the total count of users
   }
 
   useEffect(() => {
-    fetchProducts();
+    fetchUsers();
   }, [query]);
 
   return (
     <div>
-      <ProductFilterAdd
+      <UserFilterAdd
         search={query.search}
         setSearch={handleSearchChange}
-        onAddProduct={handleAddProduct}
+        onAdd={handleAddUser}
       />
-      <EnhancedTable<Product>
+      <EnhancedTable<User>
         order={query.order}
         setOrder={(o) => setQuery((prev) => ({ ...prev, order: o }))}
         orderBy={query.orderBy}
@@ -86,19 +87,19 @@ const ProductPage = () => {
         setPage={handlePageChange}
         dense={dense}
         setDense={setDense}
-        rowsPerPage={query.limit}
-        rows={products}
+        rowsPerPage={query.limit} // fixed at 10
+        rows={users}
         headCells={headCells}
         id="_id"
-        totalCount={totalCount}
+        totalCount={totalCount}   // pass down for Pagination
       />
-      <ProductFormDialog
+      <UserFormDialog
         open={openDialog}
         onClose={handleCloseDialog}
-        onSubmit={handleCreateProduct}
+        onSubmit={handleCreateUser}
       />
     </div>
   );
 };
 
-export default ProductPage;
+export default UserPage;

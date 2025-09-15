@@ -1,13 +1,8 @@
 import { TextField, Button } from "@mui/material";
 import { Plus } from "lucide-react";
+import type { FilterProps } from "../../../interfaces/interfaces";
 
-interface UserFilterProps {
-  search: string;
-setSearch: (value: string) => void;  
-onAddUser?: () => void;
-}
-
-const UserFilterAdd = ({ search, setSearch, onAddUser }: UserFilterProps) => {
+const UserFilterAdd = ({ search, setSearch, onAdd }: FilterProps) => {
   return (
     <div
       style={{
@@ -36,7 +31,7 @@ const UserFilterAdd = ({ search, setSearch, onAddUser }: UserFilterProps) => {
         variant="contained"
         color="primary"
         startIcon={<Plus size={18} />}
-        onClick={onAddUser}
+        onClick={onAdd}
         sx={{ borderRadius: "8px", textTransform: "none" }}
       >
         Add User

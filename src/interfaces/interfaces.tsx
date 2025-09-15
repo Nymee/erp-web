@@ -33,13 +33,46 @@ export interface SignUp {
   user_mobile: string;
 }
 
-export interface UserQuery {
+export interface BasicQuery {
   page: number;              
   limit: number;
   order: "asc" | "desc";
-  orderBy: keyof User;
+  orderBy: string;
   search: string;
 }
+
+export interface FilterProps {
+  search: string;
+setSearch: (value: string) => void;  
+onAdd?: () => void;
+}
+
+export interface ProductList {
+  name: string;
+  cost_price: number;
+  retail_margin: number;   
+  discount_price: number;  
+  gst: number;             
+  cess: number;            
+  sales_price: number;    
+}
+
+export interface ProductCreate {
+  name: string;
+  cost_price: number;
+  retail_margin: number;   
+  discount_price: number;  
+  gst: number;             
+  cess: number;            
+  sales_price: number;    
+}
+
+export interface DialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (data: any) => void;
+}
+
 
 
 export type approveCompany = "approved" | "rejected" | "";
