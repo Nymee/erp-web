@@ -20,13 +20,13 @@ const createUserSchema = yup.object().shape({
   role: yup.string().oneOf(["SAU", "SE", "MG", "ADMIN"]).default("SAU"),
 });
 
-interface UserFormDialogProps {
+export interface DialogProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
 }
 
-const UserFormDialog: React.FC<UserFormDialogProps> = ({
+const UserFormDialog: React.FC<DialogProps> = ({
   open,
   onClose,
   onSubmit,

@@ -1,10 +1,11 @@
-import type { BasicQuery } from "../../../interfaces/interfaces";
+import type { BasicQuery } from "../../interfaces/interfaces";
+
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
-const getUsers = (query: BasicQuery) => {
-  const url = `${apiUrl}/api/user?page=${query.page + 1}&limit=${query.limit}&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
-  const users = fetch(url, {
+const getProducts = (query: BasicQuery) => {
+  const url = `${apiUrl}/api/product?page=${query.page + 1}&limit=${query.limit}&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
+  const products = fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -13,7 +14,7 @@ const getUsers = (query: BasicQuery) => {
   })
     .then((res) => {
       if (!res.ok) {
-        throw new Error("Failed to fetch users");
+        throw new Error("Failed to fetch products");
       }
       return res.json();
     })
@@ -21,12 +22,12 @@ const getUsers = (query: BasicQuery) => {
       throw err;
     });
 
-  return users;
+  return products;
 };
 
-const createUsers = (data: any) => {
-  const url = `${apiUrl}/api/user`;
-  const users = fetch(url, {
+const createProduct = (data: any) => {
+  const url = `${apiUrl}/api/product`;
+  const product = fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -36,13 +37,15 @@ const createUsers = (data: any) => {
   })
     .then((res) => {
       if (!res.ok) {
-        throw new Error("Failed to create user");
+        throw new Error("Failed to create product");
       }
       return res.json();
     })
     .catch((err) => {
       throw err;
     });
+
+  return product;
 };
 
-export default { getUsers, createUsers };
+export default { getProducts, createProduct };

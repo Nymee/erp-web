@@ -1,5 +1,5 @@
 import EnhancedTable from "../../../shared/components/Table";
-import type { HeadCell, User, UserQuery } from "../../../interfaces/interfaces";
+import type { BasicQuery, HeadCell, User } from "../../../interfaces/interfaces";
 import { useEffect, useState } from "react";
 import UserFilterAdd from "../components/UserFilterAdd";
 import UserFormDialog from "../components/UserFormDialog";
@@ -13,7 +13,7 @@ const UserPage = () => {
     { id: "mobile", numeric: false, disablePadding: false, label: "Mobile" },
   ];
 
-  const [query, setQuery] = useState<UserQuery>({
+  const [query, setQuery] = useState<BasicQuery>({
     page: 0,                
     limit: 10,              
     order: "asc",
@@ -74,7 +74,7 @@ const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
       <UserFilterAdd
         search={query.search}
         setSearch={handleSearchChange}
-        onAddUser={handleAddUser}
+        onAdd={handleAddUser}
       />
       <EnhancedTable<User>
         order={query.order}
