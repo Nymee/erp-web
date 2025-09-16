@@ -2,7 +2,7 @@ import { useState } from "react";
 import LoginForm from "../components/LoginForm";
 import { jwtDecode } from "jwt-decode";
 import type { Login } from "../../../interfaces/interfaces";
-import authService from "../services/authService";
+import authService from "../authService";
 const LoginPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

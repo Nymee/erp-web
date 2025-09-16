@@ -1,16 +1,22 @@
 import SignUpForm from "../components/SignUpForm";
 import type { SignUp } from "../../../interfaces/interfaces";
-import authService from "../services/authService";
 import { useState } from "react";
+import authService from "../authService";
+import { set } from "react-hook-form";
 
 const SignUpPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [created, setCreated] = useState(false);
+
   const onSubmit = async (data: SignUp) => {
     try {
       setLoading(true);
       setError("");
-      const res = authService.signUp(data);
+      const res = await authService.signUp(data);
+      if (res.status == 201) {
+        setCreated(true);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -20,7 +26,11 @@ const SignUpPage = () => {
 
   return (
     <div>
-      <SignUpForm onSubmit={onSubmit} loading={loading} />
+      {created ? (
+        <p>Account Created Successfully</p>
+      ) : (
+        <SignUpForm onSubmit={onSubmit} loading={loading} />
+      )}
     </div>
   );
 };
