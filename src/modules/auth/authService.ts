@@ -1,5 +1,4 @@
-import type { Login } from "../../../interfaces/interfaces";
-import type { SignUp } from "../../../interfaces/interfaces";
+import type { Login, SignUp } from "../../interfaces/interfaces";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -25,7 +24,7 @@ async function loginUser(payload: Login) {
 
 async function signUp(payload: SignUp) {
   try {
-    const res = await fetch(`${apiUrl}/auth/sign-up`, {
+    const res = await fetch(`${apiUrl}/api/auth/sign-up`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
