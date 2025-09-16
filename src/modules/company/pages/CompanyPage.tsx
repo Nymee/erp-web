@@ -25,7 +25,7 @@ const CompanyPage = () => {
   ];
 
   const [order, setOrder] = useState<"asc" | "desc">("asc");
-  const [orderBy, setOrderBy] = useState<keyof Company>("name");
+  const [orderBy, setOrderBy] = useState<string>("name");
   const [selected, setSelected] = useState<number[]>([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
