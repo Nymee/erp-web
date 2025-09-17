@@ -34,7 +34,7 @@ export interface SignUp {
 }
 
 export interface BasicQuery {
-  page: number;              
+  page: number;
   limit: number;
   order: "asc" | "desc";
   orderBy: string;
@@ -43,28 +43,28 @@ export interface BasicQuery {
 
 export interface FilterProps {
   search: string;
-setSearch: (value: string) => void;  
-onAdd?: () => void;
+  setSearch: (value: string) => void;
+  onAdd?: () => void;
 }
 
 export interface ProductList {
   name: string;
   cost_price: number;
-  retail_margin: number;   
-  discount_price: number;  
-  gst: number;             
-  cess: number;            
-  sales_price: number;    
+  retail_margin: number;
+  discount_price: number;
+  gst: number;
+  cess: number;
+  sales_price: number;
 }
 
 export interface ProductCreate {
   name: string;
   cost_price: number;
-  retail_margin: number;   
-  discount_price: number;  
-  gst: number;             
-  cess: number;            
-  sales_price: number;    
+  retail_margin: number;
+  discount_price: number;
+  gst: number;
+  cess: number;
+  sales_price: number;
 }
 
 export interface DialogProps {
@@ -72,8 +72,6 @@ export interface DialogProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
 }
-
-
 
 export type approveCompany = "approved" | "rejected" | "";
 
