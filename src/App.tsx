@@ -6,6 +6,7 @@ import UserPage from "./modules/user/pages/UserPage";
 import ProtectedRoute from "./route-layout/components/ProtectedRoute";
 import ClientPage from "./modules/client/pages/ClientPage";
 import ProductPage from "./modules/products/pages/ProductPage";
+import CompanyPage from "./modules/company/pages/CompanyPage";
 
 export default function App() {
   const location = useLocation();
@@ -24,13 +25,13 @@ export default function App() {
           <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
             <Route path="/user" element={<UserPage />} />
             <Route path="/client" element={<ClientPage />} />
-                        <Route path="/product" element={<ProductPage />} />
+            <Route path="/product" element={<ProductPage />} />
 
             <Route path="/" element={<Navigate to="/user" replace />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-            {/* <Route path="/company" element={<CompanyPage />} /> */}
+            <Route path="/company" element={<CompanyPage />} />
           </Route>
 
           <Route path="/">

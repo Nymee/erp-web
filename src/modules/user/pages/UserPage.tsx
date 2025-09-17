@@ -1,9 +1,13 @@
 import EnhancedTable from "../../../shared/components/Table";
-import type { BasicQuery, HeadCell, User } from "../../../interfaces/interfaces";
+import type {
+  BasicQuery,
+  HeadCell,
+  User,
+} from "../../../interfaces/interfaces";
 import { useEffect, useState } from "react";
 import UserFilterAdd from "../components/UserFilterAdd";
 import UserFormDialog from "../components/UserFormDialog";
-import userService from "../services/userService";
+import userService from "../userService";
 
 const UserPage = () => {
   const headCells: HeadCell<User>[] = [
@@ -14,8 +18,8 @@ const UserPage = () => {
   ];
 
   const [query, setQuery] = useState<BasicQuery>({
-    page: 0,                
-    limit: 10,              
+    page: 0,
+    limit: 10,
     order: "asc",
     orderBy: "name",
     search: "",
@@ -32,13 +36,13 @@ const UserPage = () => {
     setQuery((prev) => ({ ...prev, page: newPage }));
   };
 
-const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
-  setQuery({
-    ...query,
-    order,
-    orderBy,
-  });
-};
+  const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
+    setQuery({
+      ...query,
+      order,
+      orderBy,
+    });
+  };
 
   const handleSearchChange = (value: string) => {
     setQuery((prev) => ({ ...prev, page: 0, search: value }));
@@ -61,8 +65,8 @@ const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
   async function fetchUsers() {
     // Pass query to backend
     const res = await userService.getUsers(query);
-    setUsers(res.data);           // your backend should return paginated data
-    setTotalCount(res.total);     // and the total count of users
+    setUsers(res.data); // your backend should return paginated data
+    setTotalCount(res.total); // and the total count of users
   }
 
   useEffect(() => {
@@ -91,7 +95,7 @@ const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
         rows={users}
         headCells={headCells}
         id="_id"
-        totalCount={totalCount}   // pass down for Pagination
+        totalCount={totalCount} // pass down for Pagination
       />
       <UserFormDialog
         open={openDialog}
