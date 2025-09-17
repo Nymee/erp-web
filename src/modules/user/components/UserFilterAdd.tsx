@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 interface UserFilterProps {
   search: string;
   setSearch: (value: string) => void;
-  onAddUser?: () => void;
+  onAdd?: () => void;
 }
 
-const UserFilterAdd = ({ search, setSearch, onAddUser }: UserFilterProps) => {
+const UserFilterAdd = ({ search, setSearch, onAdd }: UserFilterProps) => {
   return (
     <div
       style={{
@@ -36,7 +36,7 @@ const UserFilterAdd = ({ search, setSearch, onAddUser }: UserFilterProps) => {
         variant="contained"
         color="primary"
         startIcon={<Plus size={18} />}
-        onClick={onAddUser}
+        onClick={onAdd}
         sx={{ borderRadius: "8px", textTransform: "none" }}
       >
         Add User
