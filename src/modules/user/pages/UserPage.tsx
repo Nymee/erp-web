@@ -25,7 +25,7 @@ const UserPage = () => {
     search: "",
   });
 
-  const [selected, setSelected] = useState<number[]>([]);
+  const [selected, setSelected] = useState<User[]>([]);
   const [dense, setDense] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [users, setUsers] = useState<User[]>([]);

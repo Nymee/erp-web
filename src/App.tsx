@@ -7,6 +7,9 @@ import ProtectedRoute from "./route-layout/components/ProtectedRoute";
 import ClientPage from "./modules/client/pages/ClientPage";
 import ProductPage from "./modules/products/pages/ProductPage";
 import CompanyPage from "./modules/company/pages/CompanyPage";
+import SalesListingPage from "./modules/sales/pages/SalesListingPage";
+import CheckoutPage from "./modules/sales/pages/CheckoutPage";
+import AddProduct from "./modules/sales/pages/AddProduct";
 
 export default function App() {
   const location = useLocation();
@@ -26,7 +29,8 @@ export default function App() {
             <Route path="/user" element={<UserPage />} />
             <Route path="/client" element={<ClientPage />} />
             <Route path="/product" element={<ProductPage />} />
-
+            <Route path="/add-product" element={<AddProduct />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/" element={<Navigate to="/user" replace />} />
           </Route>
 
