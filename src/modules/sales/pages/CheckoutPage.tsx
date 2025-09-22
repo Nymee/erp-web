@@ -7,6 +7,8 @@ interface SelectedProduct {
   name: string;
   cost_price: number;
   retail_margin: number;
+  retail_unit: string;
+
   margin_unit: MarginUnit;
   discount: number;
   discount_unit: MarginUnit;
@@ -21,7 +23,6 @@ const CheckoutPage = () => {
 
   const [products, setProducts] = useState<SelectedProduct[]>(initialProducts);
   const [finalDiscount, setFinalDiscount] = useState<number>(0);
-  const [discountUnit, setDiscountUnit] = useState<number>(0);
 
   const [finalDiscountUnit, setFinalDiscountUnit] = useState<MarginUnit>("rup");
 
@@ -64,6 +65,8 @@ const CheckoutPage = () => {
   const productsWithSales = products.map((p) => ({
     ...p,
     sales_price: calculateSalesPrice(p),
+    discount_unit: p.margin_unit,
+    retail_unit: p.margin_unit,
   }));
 
   /** Subtotal */
@@ -111,9 +114,9 @@ const CheckoutPage = () => {
                     className="w-20 border px-2 rounded"
                   />
                   <select
-                    value={p.margin_unit}
+                    value={p.retail_unit}
                     onChange={(e) =>
-                      handleProductChange(i, "margin_unit", e.target.value)
+                      handleProductChange(i, "retail_unit", e.target.value)
                     }
                     className="border rounded px-1"
                   >
