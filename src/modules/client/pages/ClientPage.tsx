@@ -23,7 +23,7 @@ const ClientPage = () => {
 
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [orderBy, setOrderBy] = useState("name");
-  const [selected, setSelected] = useState<number[]>([]);
+const [selected, setSelected] = useState<Client[]>([]);
   const [page, setPage] = useState(0);
   const [dense, setDense] = useState(false);
   const [rowsPerPage, setRowsPerPage] = useState(5);

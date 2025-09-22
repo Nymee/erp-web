@@ -57,6 +57,21 @@ export interface ProductList {
   sales_price: number;
 }
 
+
+
+export interface SalesProductList {
+  _id: string;
+  name: string;
+  cost_price: number;
+  retail_margin: number;
+  discount: number;       // ✅ fix this
+  gst: number;
+  cess: number;
+  sales_price: number;
+  margin_unit: string;    // ✅ add this since API has it
+}
+
+
 export interface ProductCreate {
   name: string;
   cost_price: number;
