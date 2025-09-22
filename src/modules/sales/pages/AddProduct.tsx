@@ -1,25 +1,48 @@
 import { useEffect, useState } from "react";
-import type { BasicQuery, HeadCell, ProductCreate, SalesProductList } from "../../../interfaces/interfaces";
+import type {
+  BasicQuery,
+  HeadCell,
+  ProductCreate,
+  SalesProductList,
+} from "../../../interfaces/interfaces";
 import EnhancedTable from "../../../shared/components/Table";
 import ProductFilter from "../components/ProductFilter";
 import productService from "../../products/productService";
 import CheckoutBar from "../components/CheckoutBar";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import salesService from "../salesService";
 
 const AddProduct = () => {
-const headCells: HeadCell<SalesProductList>[] = [
-  { id: "name", numeric: false, disablePadding: false, label: "Name" },
-  { id: "cost_price", numeric: true, disablePadding: false, label: "Cost Price" },
-  { id: "retail_margin", numeric: true, disablePadding: false, label: "Retail Margin" },
-  { id: "discount", numeric: true, disablePadding: false, label: "Discount" },
-  { id: "gst", numeric: true, disablePadding: false, label: "GST" },
-  { id: "cess", numeric: true, disablePadding: false, label: "Cess" },
-  { id: "sales_price", numeric: true, disablePadding: false, label: "Sales Price" },
-    { id: "margin_unit", numeric: true, disablePadding: false, label: "Margin Unit" },
-
-];
-
+  const headCells: HeadCell<SalesProductList>[] = [
+    { id: "name", numeric: false, disablePadding: false, label: "Name" },
+    {
+      id: "cost_price",
+      numeric: true,
+      disablePadding: false,
+      label: "Cost Price",
+    },
+    {
+      id: "retail_margin",
+      numeric: true,
+      disablePadding: false,
+      label: "Retail Margin",
+    },
+    { id: "discount", numeric: true, disablePadding: false, label: "Discount" },
+    { id: "gst", numeric: true, disablePadding: false, label: "GST" },
+    { id: "cess", numeric: true, disablePadding: false, label: "Cess" },
+    {
+      id: "sales_price",
+      numeric: true,
+      disablePadding: false,
+      label: "Sales Price",
+    },
+    {
+      id: "margin_unit",
+      numeric: true,
+      disablePadding: false,
+      label: "Margin Unit",
+    },
+  ];
 
   const [query, setQuery] = useState<BasicQuery>({
     page: 0,
@@ -36,7 +59,6 @@ const headCells: HeadCell<SalesProductList>[] = [
   const [totalCount, setTotalCount] = useState(0);
   const [productCount, setProductCount] = useState(0);
   const navigate = useNavigate();
-
 
   // handlers
   const handlePageChange = (newPage: number) => {
@@ -63,20 +85,18 @@ const headCells: HeadCell<SalesProductList>[] = [
 
   async function fetchProducts() {
     const res = await salesService.getSalesProducts(query);
-    setProducts(res.data);   // backend paginated data
+    setProducts(res.data); // backend paginated data
     setTotalCount(res.total); // backend total count
   }
 
-
   const handleCheckout = () => {
-    console.log("run")
-    navigate('/checkout', {
+    console.log("run");
+    navigate("/checkout", {
       state: {
         products: selected,
       },
     });
   };
-
 
   useEffect(() => {
     fetchProducts();
@@ -85,18 +105,14 @@ const headCells: HeadCell<SalesProductList>[] = [
     console.log("AddProduct - productCount:", productCount);
   }, [query]);
 
-
   useEffect(() => {
-    setProductCount(selected.length)  
-    console.log(selected, productCount)
+    setProductCount(selected.length);
+    console.log(selected, productCount);
   }, [selected]);
 
   return (
     <div>
-      <ProductFilter
-        search={query.search}
-        setSearch={handleSearchChange}
-      />
+      <ProductFilter search={query.search} setSearch={handleSearchChange} />
 
       <EnhancedTable<SalesProductList>
         order={query.order}
@@ -115,11 +131,12 @@ const headCells: HeadCell<SalesProductList>[] = [
         id="_id"
         totalCount={totalCount}
       />
-      {productCount>0 && (
-         <CheckoutBar productCount={productCount} handleCheckout={handleCheckout}
-      ></CheckoutBar> 
-     )}
-      
+      {productCount > 0 && (
+        <CheckoutBar
+          productCount={productCount}
+          handleCheckout={handleCheckout}
+        ></CheckoutBar>
+      )}
     </div>
   );
 };
