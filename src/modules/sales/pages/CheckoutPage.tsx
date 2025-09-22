@@ -21,8 +21,9 @@ const CheckoutPage = () => {
 
   const [products, setProducts] = useState<SelectedProduct[]>(initialProducts);
   const [finalDiscount, setFinalDiscount] = useState<number>(0);
-  const [finalDiscountUnit, setFinalDiscountUnit] =
-    useState<MarginUnit>("rup");
+  const [discountUnit, setDiscountUnit] = useState<number>(0);
+
+  const [finalDiscountUnit, setFinalDiscountUnit] = useState<MarginUnit>("rup");
 
   /** Calculate sales price for one product */
   const calculateSalesPrice = (p: SelectedProduct): number => {
@@ -99,53 +100,52 @@ const CheckoutPage = () => {
 
               {/* Retail margin */}
               {/* Retail margin */}
-<td className="p-2">
-  <div className="flex gap-2">
-    <input
-      type="number"
-      value={p.retail_margin}
-      onChange={(e) =>
-        handleProductChange(i, "retail_margin", e.target.value)
-      }
-      className="w-20 border px-2 rounded"
-    />
-    <select
-      value={p.margin_unit}
-      onChange={(e) =>
-        handleProductChange(i, "margin_unit", e.target.value)
-      }
-      className="border rounded px-1"
-    >
-      <option value="rup">Rs</option>
-      <option value="per">%</option>
-    </select>
-  </div>
-</td>
+              <td className="p-2">
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={p.retail_margin}
+                    onChange={(e) =>
+                      handleProductChange(i, "retail_margin", e.target.value)
+                    }
+                    className="w-20 border px-2 rounded"
+                  />
+                  <select
+                    value={p.margin_unit}
+                    onChange={(e) =>
+                      handleProductChange(i, "margin_unit", e.target.value)
+                    }
+                    className="border rounded px-1"
+                  >
+                    <option value="rup">Rs</option>
+                    <option value="per">%</option>
+                  </select>
+                </div>
+              </td>
 
-{/* Discount */}
-<td className="p-2">
-  <div className="flex gap-2">
-    <input
-      type="number"
-      value={p.discount}
-      onChange={(e) =>
-        handleProductChange(i, "discount", e.target.value)
-      }
-      className="w-20 border px-2 rounded"
-    />
-    <select
-      value={p.discount_unit}
-      onChange={(e) =>
-        handleProductChange(i, "discount_unit", e.target.value)
-      }
-      className="border rounded px-1"
-    >
-      <option value="rup">Rs</option>
-      <option value="per">%</option>
-    </select>
-  </div>
-</td>
-
+              {/* Discount */}
+              <td className="p-2">
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={p.discount}
+                    onChange={(e) =>
+                      handleProductChange(i, "discount", e.target.value)
+                    }
+                    className="w-20 border px-2 rounded"
+                  />
+                  <select
+                    value={p.discount_unit}
+                    onChange={(e) =>
+                      handleProductChange(i, "discount_unit", e.target.value)
+                    }
+                    className="border rounded px-1"
+                  >
+                    <option value="rup">Rs</option>
+                    <option value="per">%</option>
+                  </select>
+                </div>
+              </td>
 
               <td className="p-2">{p.gst}%</td>
               <td className="p-2">{p.cess}%</td>
