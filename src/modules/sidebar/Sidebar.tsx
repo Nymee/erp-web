@@ -45,7 +45,7 @@ export default function Sidebar() {
             </NavLink>
 
             <NavLink
-              to="/users"
+              to="/client"
               className={({ isActive }) =>
                 `flex items-center gap-3 p-2 rounded-lg transition cursor-pointer
            ${
@@ -57,6 +57,20 @@ export default function Sidebar() {
             >
               <Users size={20} />
               <span className="font-medium">Clients</span>
+            </NavLink>
+            <NavLink
+              to="/product"
+              className={({ isActive }) =>
+                `flex items-center gap-3 p-2 rounded-lg transition cursor-pointer
+           ${
+             isActive
+               ? "bg-blue-100 text-blue-600"
+               : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+           }`
+              }
+            >
+              <Users size={20} />
+              <span className="font-medium">Products</span>
             </NavLink>
           </>
         )}

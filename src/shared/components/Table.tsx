@@ -29,8 +29,8 @@ interface EnhancedTableProps<T> {
   setOrder: (order: Order) => void;
   orderBy: string;
   setOrderBy: (orderBy: string) => void;
-  selected: number[];
-  setSelected: React.Dispatch<React.SetStateAction<number[]>>;
+  selected: T[];
+  setSelected: React.Dispatch<React.SetStateAction<T[]>>;
   page: number;
   setPage: (page: number) => void;
   dense: boolean;
@@ -199,31 +199,25 @@ export default function EnhancedTable<T extends Record<string, any>>({
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = rows?.map((row) => row[id] as number);
+      const newSelected = rows
       setSelected(newSelected);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, rowId: number) => {
-    const selectedIndex = selected.indexOf(rowId);
-    let newSelected: number[] = [];
+const handleClick = (event: React.MouseEvent<unknown>, row: T) => {
+  const isSelected = selected.some((s) => s[id] === row[id]);
+  let newSelected: T[] = [];
 
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, rowId);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-    setSelected(newSelected);
-  };
+  if (!isSelected) {
+    newSelected = [...selected, row];
+  } else {
+    newSelected = selected.filter((s) => s[id] !== row[id]);
+  }
+  setSelected(newSelected);
+};
+
 
   const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDense(event.target.checked);
@@ -255,13 +249,13 @@ export default function EnhancedTable<T extends Record<string, any>>({
             <TableBody>
               {rows?.map((row, index) => {
                 const rowId = row[id] as number;
-                const isItemSelected = selected.includes(rowId);
+                const isItemSelected = selected.includes(row);
                 const labelId = `enhanced-table-checkbox-${index}`;
 
                 return (
                   <TableRow
                     hover
-                    onClick={(event) => handleClick(event, rowId)}
+                    onClick={(event) => handleClick(event, row)}
                     role="checkbox"
                     aria-checked={isItemSelected}
                     tabIndex={-1}
