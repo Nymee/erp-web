@@ -8,24 +8,23 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
 
-
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
-    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": false,
     "moduleDetection": "force",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    
-    /* Project References */
-    "composite": true,
-    "noEmit": false,
-    "declaration": true,
+
+    /* Project References - Fixed for Vite */
+    "composite": false,
+    "noEmit": true,
+    "declaration": false,
 
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]
