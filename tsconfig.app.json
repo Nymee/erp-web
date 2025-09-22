@@ -17,7 +17,7 @@
     "isolatedModules": true,
 
     /* Project References - Fixed for Vite */
-    "composite": true,
+    "composite": false,
     "noEmit": true,
     "declaration": false,
 
