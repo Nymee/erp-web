@@ -34,14 +34,14 @@ const CompanyPage = () => {
     search: "",
   });
 
-  const [selected, setSelected] = useState<number[]>([]);
+  const [selected, setSelected] = useState<Company[]>([]);
   const [dense, setDense] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
   const [tabIndex, setTabIndex] = useState(0); // 0: Approved, 1: Pending, 2: Rejected
-  const isVerifiedOptions = ["approved", "pending", "rejected"];
-  const isVerified = isVerifiedOptions[tabIndex];
+  const status = ["approved", "pending", "rejected"];
+  const currentStatus = status[tabIndex];
 
   const [openDialog, setOpenDialog] = useState(false);
   const [message, setMessage] = useState("");
@@ -104,7 +104,7 @@ const CompanyPage = () => {
 
   async function fetchCompanies() {
     try {
-      const res = await companyService.getCompanies(query, isVerified);
+      const res = await companyService.getCompanies(query, currentStatus);
       setCompanies(res.data);
       setTotalCount(res.total);
     } catch (err) {
@@ -154,7 +154,7 @@ const CompanyPage = () => {
         id="_id"
         totalCount={totalCount}
         renderAction={(row) =>
-          isVerified === "pending" ? (
+          currentStatus === "pending" ? (
             <div className="flex gap-2">
               <IconButton
                 color="success"
