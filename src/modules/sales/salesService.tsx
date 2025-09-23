@@ -26,7 +26,7 @@ const getSalesProducts = (query?: BasicQuery) => {
   return products;
 };
 
-const createSales = (query: BasicQuery) => {
+  const createSales = (query: BasicQuery) => {
   const url = `${apiUrl}/api/sales`;
   const products = fetch(url, {
     method: "POST",
