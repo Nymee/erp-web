@@ -11,6 +11,7 @@ import productService from "../../products/productService";
 import CheckoutBar from "../components/CheckoutBar";
 import { useNavigate } from "react-router-dom";
 import salesService from "../salesService";
+import clientService from "../../client/services/clientService";
 
 const AddProduct = () => {
   const headCells: HeadCell<SalesProductList>[] = [
@@ -58,6 +59,10 @@ const AddProduct = () => {
   const [products, setProducts] = useState<SalesProductList[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [productCount, setProductCount] = useState(0);
+
+  const [clients, setClients] = useState<{ _id: string; name: string }[]>([]);
+  const [selectedClient, setSelectedClient] = useState<string>("");
+
   const navigate = useNavigate();
 
   // handlers
@@ -85,14 +90,27 @@ const AddProduct = () => {
 
   async function fetchProducts() {
     const res = await salesService.getSalesProducts(query);
-    setProducts(res.data); // backend paginated data
-    setTotalCount(res.total); // backend total count
+    setProducts(res.data);
+    setTotalCount(res.total);
+  }
+
+  async function fetchClients() {
+    try {
+      const res = await clientService.getClients({ dropdown: true });
+      setClients(res.data);
+    } catch (err) {
+      console.error("Failed to fetch clients:", err);
+    }
   }
 
   const handleCheckout = () => {
-    console.log("run");
+    if (!selectedClient) {
+      alert("Please select a client before checkout.");
+      return;
+    }
     navigate("/checkout", {
       state: {
+        clientId: selectedClient,
         products: selected,
       },
     });
@@ -100,18 +118,35 @@ const AddProduct = () => {
 
   useEffect(() => {
     fetchProducts();
-    console.log("AddProduct - handleCheckout exists:", !!handleCheckout);
-    console.log("AddProduct - handleCheckout type:", typeof handleCheckout);
-    console.log("AddProduct - productCount:", productCount);
   }, [query]);
 
   useEffect(() => {
+    fetchClients();
+  }, []);
+
+  useEffect(() => {
     setProductCount(selected.length);
-    console.log(selected, productCount);
   }, [selected]);
 
   return (
     <div>
+      {/* Client dropdown */}
+      <div className="mb-4">
+        <label className="mr-2 font-medium">Select Client:</label>
+        <select
+          value={selectedClient}
+          onChange={(e) => setSelectedClient(e.target.value)}
+          className="border px-3 py-2 rounded-md"
+        >
+          <option value="">-- Select Client --</option>
+          {clients.map((c) => (
+            <option key={c._id} value={c._id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <ProductFilter search={query.search} setSearch={handleSearchChange} />
 
       <EnhancedTable<SalesProductList>
@@ -131,11 +166,12 @@ const AddProduct = () => {
         id="_id"
         totalCount={totalCount}
       />
+
       {productCount > 0 && (
         <CheckoutBar
           productCount={productCount}
           handleCheckout={handleCheckout}
-        ></CheckoutBar>
+        />
       )}
     </div>
   );

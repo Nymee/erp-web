@@ -16,6 +16,7 @@ interface SelectedProduct {
   cess: number;
   sales_price: number;
   quantity?: number;
+  _id: string;
 }
 
 const CheckoutPage = () => {
@@ -23,6 +24,7 @@ const CheckoutPage = () => {
 
   const location = useLocation();
   const { products: initialProducts } = location.state || { products: [] };
+  console.log("initialProducts", initialProducts);
 
   const [products, setProducts] = useState<SelectedProduct[]>(initialProducts);
   const [finalDiscount, setFinalDiscount] = useState<number>(0);
@@ -42,7 +44,9 @@ const CheckoutPage = () => {
     // Retail margin price
     let retailMarginPrice = 0;
     if (retail_margin_unit === "per") {
-      retailMarginPrice = Number((cost_price + (cost_price * retail_margin) / 100).toFixed(2));
+      retailMarginPrice = Number(
+        (cost_price + (cost_price * retail_margin) / 100).toFixed(2)
+      );
     } else {
       retailMarginPrice = Number((cost_price + retail_margin).toFixed(2));
     }
@@ -60,7 +64,9 @@ const CheckoutPage = () => {
 
     // Add GST + Cess
     const totalTaxRate = gst + cess;
-    const unitPrice = Number((discountPrice + (discountPrice * totalTaxRate) / 100).toFixed(2));
+    const unitPrice = Number(
+      (discountPrice + (discountPrice * totalTaxRate) / 100).toFixed(2)
+    );
 
     return unitPrice;
   };
@@ -106,6 +112,28 @@ const CheckoutPage = () => {
       ? subtotal - finalDiscount
       : subtotal - subtotal * (finalDiscount / 100);
 
+  const handleSave = async (type: string) => {
+    const products = productsWithSales.map((p) => {
+      return {
+        productId: p._id,
+        quantity: p.quantity,
+        retail_margin: p.retail_margin,
+        discount: p.discount,
+        gst: p.gst,
+        cess: p.cess,
+        retail_margin_type: p.retail_margin_type,
+        discount_type: p.discount_type,
+        clientId: localStorage.getItem("client_id"),
+      };
+    });
+    const requestBody = {
+      products: products,
+      so_discount: finalDiscount,
+      so_discount_type: finalDiscountUnit,
+      type: type,
+    };
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-7xl mx-auto">
@@ -121,24 +149,43 @@ const CheckoutPage = () => {
             <table className="w-full">
               <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
                 <tr>
-                  <th className="px-4 py-4 text-left font-semibold">Product Name</th>
-                  <th className="px-4 py-4 text-left font-semibold">Cost Price</th>
-                  <th className="px-4 py-4 text-left font-semibold">Retail Margin</th>
-                  <th className="px-4 py-4 text-left font-semibold">Discount</th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Product Name
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Cost Price
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Retail Margin
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Discount
+                  </th>
                   <th className="px-4 py-4 text-left font-semibold">GST</th>
                   <th className="px-4 py-4 text-left font-semibold">Cess</th>
-                  <th className="px-4 py-4 text-left font-semibold">Quantity</th>
-                  <th className="px-4 py-4 text-left font-semibold">Sales Price</th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Quantity
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Sales Price
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {productsWithSales.map((p, i) => (
-                  <tr key={i} className={`border-b hover:bg-blue-50 transition-colors ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                  <tr
+                    key={i}
+                    className={`border-b hover:bg-blue-50 transition-colors ${
+                      i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    }`}
+                  >
                     <td className="px-4 py-4">
                       <div className="font-medium text-gray-900">{p.name}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <span className="font-medium text-gray-700">₹{p.cost_price}</span>
+                      <span className="font-medium text-gray-700">
+                        ₹{p.cost_price}
+                      </span>
                     </td>
 
                     {/* Retail margin */}
@@ -148,14 +195,22 @@ const CheckoutPage = () => {
                           type="number"
                           value={p.retail_margin}
                           onChange={(e) =>
-                            handleProductChange(i, "retail_margin", e.target.value)
+                            handleProductChange(
+                              i,
+                              "retail_margin",
+                              e.target.value
+                            )
                           }
                           className="w-20 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         />
                         <select
                           value={p.margin_unit}
                           onChange={(e) =>
-                            handleProductChange(i, "margin_unit", e.target.value)
+                            handleProductChange(
+                              i,
+                              "margin_unit",
+                              e.target.value
+                            )
                           }
                           className="border border-blue-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         >
@@ -179,7 +234,11 @@ const CheckoutPage = () => {
                         <select
                           value={p.discount_unit}
                           onChange={(e) =>
-                            handleProductChange(i, "discount_unit", e.target.value)
+                            handleProductChange(
+                              i,
+                              "discount_unit",
+                              e.target.value
+                            )
                           }
                           className="border border-blue-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         >
@@ -218,7 +277,9 @@ const CheckoutPage = () => {
                     {/* Sales Price */}
                     <td className="px-4 py-4">
                       <div className="flex flex-col">
-                        <span className="text-lg font-bold text-blue-600">₹{p.sales_price.toFixed(2)}</span>
+                        <span className="text-lg font-bold text-blue-600">
+                          ₹{p.sales_price.toFixed(2)}
+                        </span>
                         <span className="text-xs text-gray-500">
                           (₹{calculateUnitPrice(p).toFixed(2)} × {p.quantity})
                         </span>
@@ -236,9 +297,13 @@ const CheckoutPage = () => {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Final Discount */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Final Discount</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Final Discount
+              </h3>
               <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                <label className="font-medium text-blue-800">Additional Discount:</label>
+                <label className="font-medium text-blue-800">
+                  Additional Discount:
+                </label>
                 <input
                   type="number"
                   value={finalDiscount}
@@ -248,7 +313,9 @@ const CheckoutPage = () => {
                 />
                 <select
                   value={finalDiscountUnit}
-                  onChange={(e) => setFinalDiscountUnit(e.target.value as MarginUnit)}
+                  onChange={(e) =>
+                    setFinalDiscountUnit(e.target.value as MarginUnit)
+                  }
                   className="border border-blue-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 >
                   <option value="rup">Rs</option>
@@ -259,34 +326,53 @@ const CheckoutPage = () => {
 
             {/* Totals */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Order Summary
+              </h3>
               <div className="space-y-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-medium">Subtotal:</span>
-                  <span className="text-lg font-semibold text-gray-800">₹{subtotal.toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-gray-800">
+                    ₹{subtotal.toFixed(2)}
+                  </span>
                 </div>
                 {finalDiscount > 0 && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">Final Discount:</span>
+                    <span className="text-gray-600 font-medium">
+                      Final Discount:
+                    </span>
                     <span className="text-red-600 font-semibold">
-                      -{finalDiscountUnit === "rup" ? `₹${finalDiscount.toFixed(2)}` : `${finalDiscount}%`}
+                      -
+                      {finalDiscountUnit === "rup"
+                        ? `₹${finalDiscount.toFixed(2)}`
+                        : `${finalDiscount}%`}
                     </span>
                   </div>
                 )}
                 <hr className="border-blue-200" />
                 <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold text-blue-800">Grand Total:</span>
-                  <span className="text-2xl font-bold text-blue-600">₹{grandTotal.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-blue-800">
+                    Grand Total:
+                  </span>
+                  <span className="text-2xl font-bold text-blue-600">
+                    ₹{grandTotal.toFixed(2)}
+                  </span>
                 </div>
               </div>
-              
+
               {/* Action buttons */}
               <div className="flex gap-3 mt-6">
-                <button className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl">
-                  Proceed to Payment
+                <button
+                  onClick={handleSave("order")}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Save as Order
                 </button>
-                <button className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">
-                  Save as Draft
+                <button
+                  onClick={handleSave("estimation")}
+                  className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all"
+                >
+                  Save as Estimate
                 </button>
               </div>
             </div>

@@ -1,11 +1,23 @@
+import { BasicQuery } from "../../../interfaces/interfaces";
+
 const apiUrl = import.meta.env.VITE_API_URL;
 
-const getClients = () => {
-  const url = `${apiUrl}/api/client`;
+const getClients = (query: BasicQuery) => {
+  let url = "";
+
+  if (query.dropdown) {
+    url = `${apiUrl}/api/client?dropdown=true`;
+  } else {
+    url = `${apiUrl}/api/client?page=${query.page + 1}&limit=${
+      query.limit
+    }&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
+  }
+
   const clients = fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
   })
     .then((res) => {

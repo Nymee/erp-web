@@ -34,11 +34,12 @@ export interface SignUp {
 }
 
 export interface BasicQuery {
-  page: number;
-  limit: number;
-  order: "asc" | "desc";
-  orderBy: string;
-  search: string;
+  page?: number;
+  limit?: number;
+  order?: "asc" | "desc";
+  orderBy?: string;
+  search?: string;
+  dropdown?: boolean;
 }
 
 export interface FilterProps {
@@ -57,20 +58,17 @@ export interface ProductList {
   sales_price: number;
 }
 
-
-
 export interface SalesProductList {
   _id: string;
   name: string;
   cost_price: number;
   retail_margin: number;
-  discount: number;       // ✅ fix this
+  discount: number; // ✅ fix this
   gst: number;
   cess: number;
   sales_price: number;
-  margin_unit: string;    // ✅ add this since API has it
+  margin_unit: string; // ✅ add this since API has it
 }
-
 
 export interface ProductCreate {
   name: string;
