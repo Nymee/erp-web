@@ -29,19 +29,11 @@ const UserPage = () => {
   const [dense, setDense] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const [totalCount, setTotalCount] = useState(0); // backend total
+  const [totalCount, setTotalCount] = useState(0);
 
   // Handlers
   const handlePageChange = (newPage: number) => {
     setQuery((prev) => ({ ...prev, page: newPage }));
-  };
-
-  const handleSortChange = (order: "asc" | "desc", orderBy: keyof User) => {
-    setQuery({
-      ...query,
-      order,
-      orderBy,
-    });
   };
 
   const handleSearchChange = (value: string) => {
@@ -63,10 +55,9 @@ const UserPage = () => {
   };
 
   async function fetchUsers() {
-    // Pass query to backend
     const res = await userService.getUsers(query);
-    setUsers(res.data); // your backend should return paginated data
-    setTotalCount(res.total); // and the total count of users
+    setUsers(res.data);
+    setTotalCount(res.total);
   }
 
   useEffect(() => {
@@ -74,29 +65,46 @@ const UserPage = () => {
   }, [query]);
 
   return (
-    <div>
-      <UserFilterAdd
-        search={query.search}
-        setSearch={handleSearchChange}
-        onAdd={handleAddUser}
-      />
-      <EnhancedTable<User>
-        order={query.order}
-        setOrder={(o) => setQuery((prev) => ({ ...prev, order: o }))}
-        orderBy={query.orderBy}
-        setOrderBy={(ob) => setQuery((prev) => ({ ...prev, orderBy: ob }))}
-        selected={selected}
-        setSelected={setSelected}
-        page={query.page}
-        setPage={handlePageChange}
-        dense={dense}
-        setDense={setDense}
-        rowsPerPage={query.limit} // fixed at 10
-        rows={users}
-        headCells={headCells}
-        id="_id"
-        totalCount={totalCount} // pass down for Pagination
-      />
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Page Header */}
+      <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-2xl shadow-lg border border-blue-200 p-8">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+          Executive Management
+        </h1>
+        <p className="text-gray-600 text-sm mt-2">
+          Manage your sales team, roles, and user accounts
+        </p>
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <UserFilterAdd
+          search={query.search}
+          setSearch={handleSearchChange}
+          onAdd={handleAddUser}
+        />
+        
+        <EnhancedTable<User>
+          order={query.order}
+          setOrder={(o) => setQuery((prev) => ({ ...prev, order: o }))}
+          orderBy={query.orderBy}
+          setOrderBy={(ob) => setQuery((prev) => ({ ...prev, orderBy: ob }))}
+          selected={selected}
+          setSelected={setSelected}
+          page={query.page}
+          setPage={handlePageChange}
+          dense={dense}
+          setDense={setDense}
+          rowsPerPage={query.limit}
+          rows={users}
+          headCells={headCells}
+          id="_id"
+          title="Executives"
+          totalCount={totalCount}
+        />
+      </div>
+
+      {/* Dialog */}
       <UserFormDialog
         open={openDialog}
         onClose={handleCloseDialog}
