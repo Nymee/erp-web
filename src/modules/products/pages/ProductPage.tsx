@@ -7,13 +7,13 @@ import productService from "../productService";
 
 const ProductPage = () => {
   const headCells: HeadCell<ProductList>[] = [
-  { id: "name", numeric: false, disablePadding: false, label: "Name" },
-  { id: "cost_price", numeric: true, disablePadding: false, label: "Cost Price" },
-  { id: "retail_margin", numeric: true, disablePadding: false, label: "Retail Margin" },
-  { id: "discount_price", numeric: true, disablePadding: false, label: "Discount" },
-  { id: "gst", numeric: true, disablePadding: false, label: "GST" },
-  { id: "cess", numeric: true, disablePadding: false, label: "Cess" },
-  { id: "sales_price", numeric: true, disablePadding: false, label: "Sales Price" },
+    { id: "name", numeric: false, disablePadding: false, label: "Name" },
+    { id: "cost_price", numeric: true, disablePadding: false, label: "Base Price" },
+    { id: "retail_margin", numeric: true, disablePadding: false, label: "Markup" },
+    { id: "discount", numeric: true, disablePadding: false, label: "Discount" },
+    { id: "gst", numeric: true, disablePadding: false, label: "GST" },
+    { id: "cess", numeric: true, disablePadding: false, label: "Cess" },
+    { id: "sales_price", numeric: true, disablePadding: false, label: "Sales Price" },
   ];
 
   const [query, setQuery] = useState<BasicQuery>({
@@ -55,22 +55,34 @@ const ProductPage = () => {
 
   async function fetchProducts() {
     const res = await productService.getProducts(query);
-    setProducts(res.data);   // backend paginated data
-    setTotalCount(res.total); // backend total count
+    setProducts(res.data);
+    setTotalCount(res.total);
   }
 
   useEffect(() => {
     fetchProducts();
   }, [query]);
 
-  return (
-    <div>
+return (
+  <div className="space-y-6 max-w-7xl mx-auto">
+    {/* Page Header */}
+    <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-2xl shadow-lg border border-blue-200 p-8">
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+        Product Management
+      </h1>
+      <p className="text-gray-600 text-sm mt-2">
+        Manage your product catalog, pricing, and inventory
+      </p>
+    </div>
+
+    {/* Table Section - Natural sizing */}
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
       <ProductFilterAdd
         search={query.search}
         setSearch={handleSearchChange}
         onAdd={handleAddProduct}
       />
-
+      
       <EnhancedTable<ProductList>
         order={query.order}
         setOrder={(o) => setQuery((prev) => ({ ...prev, order: o }))}
@@ -87,15 +99,18 @@ const ProductPage = () => {
         headCells={headCells}
         id="_id"
         totalCount={totalCount}
-      />
-
-      <ProductAddDialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        onSubmit={handleCreateProduct}
+        title="Products"
       />
     </div>
-  );
+
+    {/* Dialog */}
+    <ProductAddDialog
+      open={openDialog}
+      onClose={handleCloseDialog}
+      onSubmit={handleCreateProduct}
+    />
+  </div>
+);
 };
 
 export default ProductPage;
