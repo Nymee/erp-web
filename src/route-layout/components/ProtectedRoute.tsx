@@ -1,28 +1,33 @@
-import { type ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 interface ProtectedRouteProps {
-    children: ReactNode,
-    allowedRoles: string[]
+  allowedRoles: string[];
 }
 
-const ProtectedRoute = ({ allowedRoles, children}: ProtectedRouteProps) => {
+const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const token = localStorage.getItem("decodedToken");
+  const role = token ? JSON.parse(token).role : null;
+  const exp = token ? JSON.parse(token).exp : null;
+  let expired = false;
 
-    const token = localStorage.getItem("token");
-    const role = token? JSON.parse(token).role :null;
+  if (exp) {
+    const currentTime = Date.now() / 1000;
+    expired = exp < currentTime;
+  }
 
+  console.log(token, "tokennnnn");
 
-    if(!token){
-        return <Navigate to = "/login" replace/>
-    }
+  if (!token || expired === true) {
+    localStorage.removeItem("decodedToken");
+    return <Navigate to="/login" replace />; //rest of the code wont run once this is returned
+  }
 
-    if(allowedRoles.includes(role)){
-        return children;
-    }
-    else{
-        //return unauthorised page
-    }
+  if (role && allowedRoles.includes(role)) {
+    return <Outlet />;
+  } else {
+    return <Navigate to="/unauthorized" replace />;
+    // Or return a custom unauthorized component instead
+  }
 };
-
 
 export default ProtectedRoute;

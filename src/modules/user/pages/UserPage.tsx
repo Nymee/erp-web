@@ -1,54 +1,115 @@
-import { User } from "lucide-react";
-import UserTable from "../components/UserTable";
 import EnhancedTable from "../../../shared/components/Table";
-import type { HeadCell } from "../../../interfaces/interfaces";
-import { useState } from "react";
+import type {
+  BasicQuery,
+  HeadCell,
+  User,
+} from "../../../interfaces/interfaces";
+import { useEffect, useState } from "react";
+import UserFilterAdd from "../components/UserFilterAdd";
+import UserFormDialog from "../components/UserFormDialog";
+import userService from "../userService";
 
 const UserPage = () => {
-  interface UserData {
-    uid: number;
-    role: string;
-    email: string;
-    name: string;
-  }
-
-  const userData: UserData[] = [
-    { uid: 1, name: "John Doe", role: "Admin", email: "hjdfjsh" },
-    { uid: 2, name: "Jane Smith", role: "User", email: "hjdfjsh" },
-    { uid: 3, name: "Alice Johnson", role: "User", email: "hjdfjsh" },
-    { uid: 4, name: "Bob Brown", role: "User", email: "hjdfjsh" },
-  ];
-  const headCells: HeadCell<UserData>[] = [
+  const headCells: HeadCell<User>[] = [
     { id: "name", numeric: false, disablePadding: false, label: "Name" },
     { id: "role", numeric: false, disablePadding: false, label: "Role" },
     { id: "email", numeric: false, disablePadding: false, label: "Email" },
+    { id: "mobile", numeric: false, disablePadding: false, label: "Mobile" },
   ];
 
-    const [order, setOrder] = useState<"asc" | "desc">("asc");
-  const [orderBy, setOrderBy] = useState<keyof UserData>("name");
-  const [selected, setSelected] = useState<number[]>([]);
-  const [page, setPage] = useState(0);
-  const [dense, setDense] = useState(false);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  return (
-    <div>
-      <EnhancedTable<UserData>   
-      order={order}
-      setOrder={setOrder}
-      orderBy={orderBy}
-      setOrderBy={setOrderBy}
-      selected={selected}
-      setSelected={setSelected}
-      page={page}
-      setPage={setPage}
-      dense={dense}
-      setDense={setDense}
-      rowsPerPage={rowsPerPage}
-      setRowsPerPage={setRowsPerPage}
-      rows={userData}
-      headCells={headCells} 
-      id = "uid"/>
+  const [query, setQuery] = useState<BasicQuery>({
+    page: 0,
+    limit: 10,
+    order: "asc",
+    orderBy: "name",
+    search: "",
+  });
 
+  const [selected, setSelected] = useState<User[]>([]);
+  const [dense, setDense] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Handlers
+  const handlePageChange = (newPage: number) => {
+    setQuery((prev) => ({ ...prev, page: newPage }));
+  };
+
+  const handleSearchChange = (value: string) => {
+    setQuery((prev) => ({ ...prev, page: 0, search: value }));
+  };
+
+  const handleAddUser = () => setOpenDialog(true);
+  const handleCloseDialog = () => setOpenDialog(false);
+
+  const handleCreateUser = async (data: any) => {
+    try {
+      await userService.createUsers(data);
+      await fetchUsers();
+    } catch (err) {
+      console.error("Failed to create user:", err);
+    } finally {
+      setOpenDialog(false);
+    }
+  };
+
+  async function fetchUsers() {
+    const res = await userService.getUsers(query);
+    setUsers(res.data);
+    setTotalCount(res.total);
+  }
+
+  useEffect(() => {
+    fetchUsers();
+  }, [query]);
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Page Header */}
+      <div className="bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-2xl shadow-lg border border-blue-200 p-8">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-blue-900 bg-clip-text text-transparent">
+          Executive Management
+        </h1>
+        <p className="text-gray-600 text-sm mt-2">
+          Manage your sales team, roles, and user accounts
+        </p>
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <UserFilterAdd
+          search={query.search}
+          setSearch={handleSearchChange}
+          onAdd={handleAddUser}
+        />
+        
+        <EnhancedTable<User>
+          order={query.order}
+          setOrder={(o) => setQuery((prev) => ({ ...prev, order: o }))}
+          orderBy={query.orderBy}
+          setOrderBy={(ob) => setQuery((prev) => ({ ...prev, orderBy: ob }))}
+          selected={selected}
+          setSelected={setSelected}
+          page={query.page}
+          setPage={handlePageChange}
+          dense={dense}
+          setDense={setDense}
+          rowsPerPage={query.limit}
+          rows={users}
+          headCells={headCells}
+          id="_id"
+          title="Executives"
+          totalCount={totalCount}
+        />
+      </div>
+
+      {/* Dialog */}
+      <UserFormDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        onSubmit={handleCreateUser}
+      />
     </div>
   );
 };
