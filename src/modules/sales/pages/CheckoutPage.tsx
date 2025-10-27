@@ -1,110 +1,93 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
-
-type MarginUnit = "rup" | "per";
+import { useLocation, useNavigate } from "react-router-dom";
+import salesService from "../salesService";
 
 interface SelectedProduct {
+  _id: string;
   name: string;
   cost_price: number;
   retail_margin: number;
-  margin_unit: MarginUnit;
-  discount: number;
-  discount_unit: MarginUnit;
-  retail_margin_type: MarginUnit;
-  discount_type: MarginUnit;
-  gst: number;
-  cess: number;
-  sales_price: number;
+  discount?: number;
   quantity?: number;
+  sales_price: number;
 }
 
 const CheckoutPage = () => {
-  // Mock initial products for demo
-
   const location = useLocation();
-  const { products: initialProducts } = location.state || { products: [] };
+  const { clientId, products: initialProducts } = location.state || {
+    clientId: null,
+    products: [],
+  };
 
   const [products, setProducts] = useState<SelectedProduct[]>(initialProducts);
-  const [finalDiscount, setFinalDiscount] = useState<number>(0);
-  const [finalDiscountUnit, setFinalDiscountUnit] = useState<MarginUnit>("rup");
+  const [so_discount, setSoDiscount] = useState<number>(0);
 
-  /** Calculate unit price for one product (without quantity) */
-  const calculateUnitPrice = (p: SelectedProduct) => {
-    const cost_price = Number(p.cost_price);
-    const retail_margin = Number(p.retail_margin ?? 0);
-    const gst = Number(p.gst ?? 0);
-    const cess = Number(p.cess ?? 0);
+  console.log(initialProducts, "gawrddd");
+  const navigate = useNavigate();
 
-    const retail_margin_unit = p.retail_margin_type;
-    const discount_unit = p.discount_type;
-    const discount = Number(p.discount ?? 0);
-
-    // Retail margin price
-    let retailMarginPrice = 0;
-    if (retail_margin_unit === "per") {
-      retailMarginPrice = Number((cost_price + (cost_price * retail_margin) / 100).toFixed(2));
-    } else {
-      retailMarginPrice = Number((cost_price + retail_margin).toFixed(2));
-    }
-
-    // Discount amount
-    let discountAmt = 0;
-    if (discount_unit === "per") {
-      discountAmt = Number(((retailMarginPrice * discount) / 100).toFixed(2));
-    } else {
-      discountAmt = Number(discount.toFixed(2));
-    }
-
-    // Discount price
-    const discountPrice = Number((retailMarginPrice - discountAmt).toFixed(2));
-
-    // Add GST + Cess
-    const totalTaxRate = gst + cess;
-    const unitPrice = Number((discountPrice + (discountPrice * totalTaxRate) / 100).toFixed(2));
-
-    return unitPrice;
-  };
-
-  /** Calculate total sales price (unit price * quantity) */
+  /** Calculate sales price for a single product (with quantity) */
   const calculateSalesPrice = (p: SelectedProduct) => {
-    const unitPrice = calculateUnitPrice(p);
-    const quantity = Number(p.quantity ?? 1);
-    return Number((unitPrice * quantity).toFixed(2));
+    const cost = Number(p.cost_price);
+    const margin = Number(p.retail_margin ?? 0);
+    const discount = Number(p.discount ?? 0);
+    const qty = Number(p.quantity ?? 1);
+
+    // All margin/discounts are rupee-based
+    const priceAfterMargin = cost + margin;
+    const priceAfterDiscount = priceAfterMargin - discount;
+
+    const total = Number((priceAfterDiscount * qty).toFixed(2));
+    return total;
   };
 
-  /** Handle product input changes */
+  /** Handle changes to product input fields */
   const handleProductChange = (
     index: number,
     field: keyof SelectedProduct,
     value: string | number
   ) => {
     const updated = [...products];
-    if (field === "margin_unit" || field === "discount_unit") {
-      updated[index][field] = value as MarginUnit;
-    } else {
-      updated[index][field] = Number(value) as never;
-    }
+    updated[index][field] = Number(value) as never;
     updated[index].sales_price = calculateSalesPrice(updated[index]);
     setProducts(updated);
   };
 
-  /** Keep sales prices updated */
+  /** Update computed sales prices */
   const productsWithSales = products.map((p) => ({
     ...p,
     sales_price: calculateSalesPrice(p),
-    retail_margin_type: p.margin_unit,
-    discount_type: p.margin_unit,
     quantity: p.quantity || 1,
   }));
 
   /** Subtotal */
   const subtotal = productsWithSales.reduce((sum, p) => sum + p.sales_price, 0);
 
-  /** Apply final discount */
-  const grandTotal =
-    finalDiscountUnit === "rup"
-      ? subtotal - finalDiscount
-      : subtotal - subtotal * (finalDiscount / 100);
+  /** Grand total after final discount */
+  const grandTotal = subtotal - so_discount;
+
+  /** Handle save */
+  const handleSave = async (asOrder: boolean) => {
+    const payload = {
+      clientId: clientId,
+      type: asOrder ? "order" : "estimation",
+      so_discount,
+      so_discount_type: "rup",
+      products: productsWithSales.map((p) => ({
+        productId: p._id,
+        quantity: p.quantity,
+        retail_margin: p.retail_margin,
+        retail_margin_type: "rup",
+        discount: p.discount,
+        discount_type: p.discount != null ? "rup" : undefined,
+      })),
+    };
+    console.log("Payload:", payload);
+
+    const res = await salesService.createSales(payload);
+    if (res) {
+      navigate("/sales/all");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -121,106 +104,101 @@ const CheckoutPage = () => {
             <table className="w-full">
               <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
                 <tr>
-                  <th className="px-4 py-4 text-left font-semibold">Product Name</th>
-                  <th className="px-4 py-4 text-left font-semibold">Cost Price</th>
-                  <th className="px-4 py-4 text-left font-semibold">Retail Margin</th>
-                  <th className="px-4 py-4 text-left font-semibold">Discount</th>
-                  <th className="px-4 py-4 text-left font-semibold">GST</th>
-                  <th className="px-4 py-4 text-left font-semibold">Cess</th>
-                  <th className="px-4 py-4 text-left font-semibold">Quantity</th>
-                  <th className="px-4 py-4 text-left font-semibold">Sales Price</th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Product Name
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Cost Price
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Retail Margin (₹)
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Discount (₹)
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Quantity
+                  </th>
+                  <th className="px-4 py-4 text-left font-semibold">
+                    Sales Price
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {productsWithSales.map((p, i) => (
-                  <tr key={i} className={`border-b hover:bg-blue-50 transition-colors ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
-                    <td className="px-4 py-4">
-                      <div className="font-medium text-gray-900">{p.name}</div>
+                  <tr
+                    key={i}
+                    className={`border-b hover:bg-blue-50 transition-colors ${
+                      i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    }`}
+                  >
+                    <td className="px-4 py-4 font-medium text-gray-900">
+                      {p.name}
                     </td>
-                    <td className="px-4 py-4">
-                      <span className="font-medium text-gray-700">₹{p.cost_price}</span>
+                    <td className="px-4 py-4 text-gray-700 font-medium">
+                      ₹{p.cost_price}
                     </td>
 
-                    {/* Retail margin */}
+                    {/* Retail Margin */}
                     <td className="px-4 py-4">
-                      <div className="flex gap-2 items-center">
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3 text-gray-500">₹</span>
                         <input
                           type="number"
                           value={p.retail_margin}
                           onChange={(e) =>
-                            handleProductChange(i, "retail_margin", e.target.value)
+                            handleProductChange(
+                              i,
+                              "retail_margin",
+                              e.target.value
+                            )
                           }
-                          className="w-20 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          className="w-24 pl-7 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         />
-                        <select
-                          value={p.margin_unit}
-                          onChange={(e) =>
-                            handleProductChange(i, "margin_unit", e.target.value)
-                          }
-                          className="border border-blue-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        >
-                          <option value="rup">Rs</option>
-                          <option value="per">%</option>
-                        </select>
                       </div>
                     </td>
 
                     {/* Discount */}
                     <td className="px-4 py-4">
-                      <div className="flex gap-2 items-center">
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3 text-gray-500">₹</span>
                         <input
                           type="number"
-                          value={p.discount}
+                          value={p.discount ?? ""}
                           onChange={(e) =>
                             handleProductChange(i, "discount", e.target.value)
                           }
-                          className="w-20 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          className="w-24 pl-7 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="0"
                         />
-                        <select
-                          value={p.discount_unit}
-                          onChange={(e) =>
-                            handleProductChange(i, "discount_unit", e.target.value)
-                          }
-                          className="border border-blue-300 rounded-lg px-2 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        >
-                          <option value="rup">Rs</option>
-                          <option value="per">%</option>
-                        </select>
                       </div>
-                    </td>
-
-                    <td className="px-4 py-4">
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                        {p.gst}%
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
-                        {p.cess}%
-                      </span>
                     </td>
 
                     {/* Quantity */}
                     <td className="px-4 py-4">
-                      <div className="flex items-center">
-                        <input
-                          type="number"
-                          min={1}
-                          value={p.quantity ?? 1}
-                          onChange={(e) =>
-                            handleProductChange(i, "quantity", e.target.value)
-                          }
-                          className="w-20 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center font-medium"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        min={1}
+                        value={p.quantity ?? 1}
+                        onChange={(e) =>
+                          handleProductChange(i, "quantity", e.target.value)
+                        }
+                        className="w-20 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center font-medium"
+                      />
                     </td>
 
                     {/* Sales Price */}
                     <td className="px-4 py-4">
                       <div className="flex flex-col">
-                        <span className="text-lg font-bold text-blue-600">₹{p.sales_price.toFixed(2)}</span>
+                        <span className="text-lg font-bold text-blue-600">
+                          ₹{p.sales_price.toFixed(2)}
+                        </span>
                         <span className="text-xs text-gray-500">
-                          (₹{calculateUnitPrice(p).toFixed(2)} × {p.quantity})
+                          (₹
+                          {((p.sales_price || 0) / (p.quantity || 1)).toFixed(
+                            2
+                          )}{" "}
+                          × {p.quantity})
                         </span>
                       </div>
                     </td>
@@ -231,62 +209,78 @@ const CheckoutPage = () => {
           </div>
         </div>
 
-        {/* Final discount and totals */}
+        {/* Final Discount & Summary */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Final Discount */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Final Discount</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Final Discount
+              </h3>
               <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                <label className="font-medium text-blue-800">Additional Discount:</label>
-                <input
-                  type="number"
-                  value={finalDiscount}
-                  onChange={(e) => setFinalDiscount(Number(e.target.value))}
-                  className="w-24 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="0"
-                />
-                <select
-                  value={finalDiscountUnit}
-                  onChange={(e) => setFinalDiscountUnit(e.target.value as MarginUnit)}
-                  className="border border-blue-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="rup">Rs</option>
-                  <option value="per">%</option>
-                </select>
+                <label className="font-medium text-blue-800">
+                  Additional Discount:
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 text-gray-500">₹</span>
+                  <input
+                    type="number"
+                    value={so_discount}
+                    onChange={(e) => setSoDiscount(Number(e.target.value))}
+                    className="w-24 pl-7 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="0"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Totals */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h3>
+            {/* Order Summary */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Order Summary
+              </h3>
               <div className="space-y-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600 font-medium">Subtotal:</span>
-                  <span className="text-lg font-semibold text-gray-800">₹{subtotal.toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-gray-800">
+                    ₹{subtotal.toFixed(2)}
+                  </span>
                 </div>
-                {finalDiscount > 0 && (
+                {so_discount > 0 && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">Final Discount:</span>
+                    <span className="text-gray-600 font-medium">
+                      Final Discount:
+                    </span>
                     <span className="text-red-600 font-semibold">
-                      -{finalDiscountUnit === "rup" ? `₹${finalDiscount.toFixed(2)}` : `${finalDiscount}%`}
+                      -₹{so_discount.toFixed(2)}
                     </span>
                   </div>
                 )}
                 <hr className="border-blue-200" />
                 <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold text-blue-800">Grand Total:</span>
-                  <span className="text-2xl font-bold text-blue-600">₹{grandTotal.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-blue-800">
+                    Grand Total:
+                  </span>
+                  <span className="text-2xl font-bold text-blue-600">
+                    ₹{grandTotal.toFixed(2)}
+                  </span>
                 </div>
               </div>
-              
-              {/* Action buttons */}
+
+              {/* Buttons */}
               <div className="flex gap-3 mt-6">
-                <button className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl">
-                  Proceed to Payment
+                <button
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl"
+                  onClick={() => handleSave(true)}
+                >
+                  Save as Order
                 </button>
-                <button className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all">
-                  Save as Draft
+
+                <button
+                  className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all"
+                  onClick={() => handleSave(false)}
+                >
+                  Save as Estimation
                 </button>
               </div>
             </div>
