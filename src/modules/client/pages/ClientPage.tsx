@@ -48,7 +48,8 @@ const ClientPage = () => {
 
   async function fetchClients() {
     const fetchedClients = await clientService.getClients();
-    setClients(fetchedClients);
+    console.log(fetchedClients, "fetchedClients");
+    setClients(fetchedClients.data);
     setTotalCount(fetchedClients.length);
   }
 
@@ -75,7 +76,7 @@ const ClientPage = () => {
           setSearch={setSearch}
           onAddClient={handleAddClient}
         />
-        
+
         <EnhancedTable<Client>
           order={order}
           setOrder={setOrder}
