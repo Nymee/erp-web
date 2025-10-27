@@ -1,5 +1,4 @@
 import * as React from "react";
-import { alpha } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -8,16 +7,8 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
 import type { HeadCell } from "../../interfaces/interfaces";
 import { Pagination } from "@mui/material";
@@ -41,6 +32,7 @@ interface EnhancedTableProps<T> {
   id: string;
   renderAction?: (row: T) => React.ReactNode;
   totalCount?: number;
+  title?: string;
 }
 
 interface EnhancedProps<T> {
@@ -73,8 +65,8 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
 
   return (
     <TableHead>
-      <TableRow>
-        <TableCell padding="checkbox">
+      <TableRow sx={{ backgroundColor: '#f8fafc' }}>
+        <TableCell padding="checkbox" sx={{ borderBottom: '2px solid #e2e8f0' }}>
           <Checkbox
             color="primary"
             indeterminate={numSelected > 0 && numSelected < rowCount}
@@ -91,6 +83,11 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
             align={headCell.numeric ? "right" : "left"}
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
+            sx={{ 
+              borderBottom: '2px solid #e2e8f0',
+              fontWeight: 600,
+              color: '#1e293b'
+            }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -106,67 +103,20 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
             </TableSortLabel>
           </TableCell>
         ))}
-        {renderAction && <TableCell align="center">Action</TableCell>}
+        {renderAction && (
+          <TableCell 
+            align="center"
+            sx={{ 
+              borderBottom: '2px solid #e2e8f0',
+              fontWeight: 600,
+              color: '#1e293b'
+            }}
+          >
+            Action
+          </TableCell>
+        )}
       </TableRow>
     </TableHead>
-  );
-}
-
-interface EnhancedTableToolbarProps {
-  numSelected: number;
-}
-
-function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected } = props;
-  return (
-    <Toolbar
-      sx={[
-        {
-          pl: { sm: 2 },
-          pr: { xs: 1, sm: 1 },
-        },
-        numSelected > 0 && {
-          bgcolor: (theme) =>
-            alpha(
-              theme.palette.primary.main,
-              theme.palette.action.activatedOpacity
-            ),
-        },
-      ]}
-    >
-      {numSelected > 0 ? (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          {numSelected} selected
-        </Typography>
-      ) : (
-        <Typography
-          sx={{ flex: "1 1 100%" }}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        >
-          Users
-        </Typography>
-      )}
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
-      )}
-    </Toolbar>
   );
 }
 
@@ -183,7 +133,6 @@ export default function EnhancedTable<T extends Record<string, any>>({
   setPage,
   rowsPerPage,
   dense,
-  setDense,
   id,
   renderAction,
   totalCount = 0,
@@ -199,37 +148,31 @@ export default function EnhancedTable<T extends Record<string, any>>({
 
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = rows
+      const newSelected = rows;
       setSelected(newSelected);
       return;
     }
     setSelected([]);
   };
 
-const handleClick = (event: React.MouseEvent<unknown>, row: T) => {
-  const isSelected = selected.some((s) => s[id] === row[id]);
-  let newSelected: T[] = [];
+  const handleClick = (event: React.MouseEvent<unknown>, row: T) => {
+    const isSelected = selected.some((s) => s[id] === row[id]);
+    let newSelected: T[] = [];
 
-  if (!isSelected) {
-    newSelected = [...selected, row];
-  } else {
-    newSelected = selected.filter((s) => s[id] !== row[id]);
-  }
-  setSelected(newSelected);
-};
-
-
-  const handleChangeDense = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setDense(event.target.checked);
+    if (!isSelected) {
+      newSelected = [...selected, row];
+    } else {
+      newSelected = selected.filter((s) => s[id] !== row[id]);
+    }
+    setSelected(newSelected);
   };
 
-  // Calculate total pages based on totalCount and fixed rowsPerPage
   const totalPages = Math.ceil(totalCount / rowsPerPage);
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
+      <Paper sx={{ width: "100%" }}>
+        {/* Table with natural content sizing */}
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -290,23 +233,24 @@ const handleClick = (event: React.MouseEvent<unknown>, row: T) => {
           </Table>
         </TableContainer>
         
-        {/* Pagination moved outside TableContainer and improved */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
+        {/* Pagination */}
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "flex-end", 
+          p: 2, 
+          borderTop: "1px solid #e2e8f0",
+          backgroundColor: '#ffffff'
+        }}>
           <Pagination
             count={totalPages}
-            page={page + 1} // Convert from 0-based to 1-based
-            onChange={(_, newPage) => setPage(newPage - 1)} // Convert back to 0-based
+            page={page + 1}
+            onChange={(_, newPage) => setPage(newPage - 1)}
             color="primary"
             showFirstButton
             showLastButton
           />
         </Box>
       </Paper>
-
-      <FormControlLabel
-        control={<Switch checked={dense} onChange={handleChangeDense} />}
-        label="Dense padding"
-      />
     </Box>
   );
 }

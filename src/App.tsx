@@ -17,32 +17,31 @@ export default function App() {
     location.pathname === "/login" || location.pathname === "/sign-up";
 
   return (
-    <div className="flex min-h-screen">
-      {!hideSidebar && (
-        <div className="w-64 bg-blue-800 text-white">
-          <Sidebar />
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+      {!hideSidebar && <Sidebar />}
+      
+      <div className={`flex-1 ${!hideSidebar ? 'overflow-y-auto' : ''}`}>
+        <div className={`${!hideSidebar ? 'p-6 h-full' : ''}`}>
+          <Routes>
+            <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
+              <Route path="/user" element={<UserPage />} />
+              <Route path="/client" element={<ClientPage />} />
+              <Route path="/product" element={<ProductPage />} />
+              <Route path="/add-product" element={<AddProduct />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/" element={<Navigate to="/user" replace />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route path="/company" element={<CompanyPage />} />
+            </Route>
+
+            <Route path="/">
+              <Route path="/sign-up" element={<SignUpPage />} />
+              <Route path="/login" element={<LoginPage />} />
+            </Route>
+          </Routes>
         </div>
-      )}
-      <div className="flex-1 p-4">
-        <Routes>
-          <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
-            <Route path="/user" element={<UserPage />} />
-            <Route path="/client" element={<ClientPage />} />
-            <Route path="/product" element={<ProductPage />} />
-            <Route path="/add-product" element={<AddProduct />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/" element={<Navigate to="/user" replace />} />
-          </Route>
-
-          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-            <Route path="/company" element={<CompanyPage />} />
-          </Route>
-
-          <Route path="/">
-            <Route path="/sign-up" element={<SignUpPage />} />
-            <Route path="/login" element={<LoginPage />} />
-          </Route>
-        </Routes>
       </div>
     </div>
   );

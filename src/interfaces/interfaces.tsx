@@ -51,7 +51,7 @@ export interface ProductList {
   name: string;
   cost_price: number;
   retail_margin: number;
-  discount_price: number;
+  discount: number;
   gst: number;
   cess: number;
   sales_price: number;
