@@ -65,8 +65,11 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
 
   return (
     <TableHead>
-      <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-        <TableCell padding="checkbox" sx={{ borderBottom: '2px solid #e2e8f0' }}>
+      <TableRow sx={{ backgroundColor: "#f8fafc" }}>
+        <TableCell
+          padding="checkbox"
+          sx={{ borderBottom: "2px solid #e2e8f0" }}
+        >
           <Checkbox
             color="primary"
             indeterminate={numSelected > 0 && numSelected < rowCount}
@@ -76,17 +79,17 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
               "aria-label": "select all items",
             }}
           />
-        </TableCell>      
+        </TableCell>
         {headCells.map((headCell) => (
           <TableCell
             key={String(headCell.id)}
             align={headCell.numeric ? "right" : "left"}
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={{ 
-              borderBottom: '2px solid #e2e8f0',
+            sx={{
+              borderBottom: "2px solid #e2e8f0",
               fontWeight: 600,
-              color: '#1e293b'
+              color: "#1e293b",
             }}
           >
             <TableSortLabel
@@ -104,12 +107,12 @@ function EnhancedTableHead<T>(props: EnhancedProps<T>) {
           </TableCell>
         ))}
         {renderAction && (
-          <TableCell 
+          <TableCell
             align="center"
-            sx={{ 
-              borderBottom: '2px solid #e2e8f0',
+            sx={{
+              borderBottom: "2px solid #e2e8f0",
               fontWeight: 600,
-              color: '#1e293b'
+              color: "#1e293b",
             }}
           >
             Action
@@ -168,6 +171,7 @@ export default function EnhancedTable<T extends Record<string, any>>({
   };
 
   const totalPages = Math.ceil(totalCount / rowsPerPage);
+  console.log(rows, "ROWWWW");
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -232,15 +236,17 @@ export default function EnhancedTable<T extends Record<string, any>>({
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         {/* Pagination */}
-        <Box sx={{ 
-          display: "flex", 
-          justifyContent: "flex-end", 
-          p: 2, 
-          borderTop: "1px solid #e2e8f0",
-          backgroundColor: '#ffffff'
-        }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            p: 2,
+            borderTop: "1px solid #e2e8f0",
+            backgroundColor: "#ffffff",
+          }}
+        >
           <Pagination
             count={totalPages}
             page={page + 1}
