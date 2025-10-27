@@ -2,6 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+} from "@mui/material";
 import type { DialogProps } from "../../../interfaces/interfaces";
 
 type ProductForm = {
@@ -10,29 +19,29 @@ type ProductForm = {
   retail_margin: number;
   min_margin: number;
   max_margin: number;
-  discount: number 
-  margin_unit: "rs" | "%";
-  gst: number 
-  cess: number 
+  discount: number;
+  gst: number;
+  cess: number;
+  margin_unit: "rup" | "per";
 };
 
 // Validation Schema
 const schema = yup.object({
-  name: yup.string().required("Name is required"),
-  cost_price: yup.number().required("Cost price is required").min(0),
+  name: yup.string().required("Product name is required"),
+  cost_price: yup.number().required("Base price is required").min(0, "Base price must be positive"),
   retail_margin: yup
     .number()
-    .required("Retail margin is required")
-    .min(0, "Must be ≥ 0"),
-  min_margin: yup.number().required("Min margin is required"),
-  max_margin: yup.number().required("Max margin is required"),
-  discount: yup.number().min(0).required(),
-  margin_unit: yup.mixed<"rs" | "%">().oneOf(["rs", "%"]).required(),
-  gst: yup.number().min(0).required(),
-  cess: yup.number().min(0).required(),
+    .required("Markup is required")
+    .min(0, "Markup must be positive"),
+  min_margin: yup.number().required("Minimum markup is required").min(0),
+  max_margin: yup.number().required("Maximum markup is required").min(0),
+  discount: yup.number().min(0, "Discount cannot be negative").required("Discount is required"),
+  gst: yup.number().min(0, "GST cannot be negative").required("GST is required"),
+  cess: yup.number().min(0, "Cess cannot be negative").required("Cess is required"),
+  margin_unit: yup.string().oneOf(["rup", "per"]).required("Margin unit is required"),
 });
 
-const ProductAddDialog = ({open, onClose, onSubmit}: DialogProps) => {
+const ProductAddDialog = ({ open, onClose, onSubmit }: DialogProps) => {
   const {
     control,
     handleSubmit,
@@ -48,142 +57,127 @@ const ProductAddDialog = ({open, onClose, onSubmit}: DialogProps) => {
       min_margin: 0,
       max_margin: 0,
       discount: 0,
-      margin_unit: "rs",
       gst: 0,
       cess: 0,
+      margin_unit: "rup",
     },
   });
 
-  // Live watched fields
-  const cost_price = watch("cost_price");
-  const retail_margin = watch("retail_margin");
-  const min_margin = watch("min_margin");
-  const max_margin = watch("max_margin");
-  const discount = watch("discount") || 0;
-  const gst = watch("gst") || 0;
-  const cess = watch("cess") || 0;
-  const margin_unit = watch("margin_unit");
+  // Live watched fields - Convert to numbers explicitly
+  const cost_price = Number(watch("cost_price")) || 0;
+  const retail_margin = Number(watch("retail_margin")) || 0;
+  const min_margin = Number(watch("min_margin")) || 0;
+  const max_margin = Number(watch("max_margin")) || 0;
+  const discount = Number(watch("discount")) || 0;
+  const gst = Number(watch("gst")) || 0;
+  const cess = Number(watch("cess")) || 0;
 
   // Derived states
   const [taxablePrice, setTaxablePrice] = useState(0);
   const [salesPrice, setSalesPrice] = useState(0);
   const [marginError, setMarginError] = useState<string | null>(null);
 
-  // Calculations
+  // Calculations (always in Rs now)
   useEffect(() => {
-    let retailPrice = cost_price;
-
-    if (margin_unit === "rs") {
-      retailPrice = cost_price + retail_margin;
-    } else if (margin_unit === "%") {
-      retailPrice = cost_price + (cost_price * retail_margin) / 100;
-    }
+    // Base Price + Markup
+    let retailPrice = cost_price + retail_margin;
 
     // Validate retail margin lies between min and max
     if (retail_margin < min_margin || retail_margin > max_margin) {
-      setMarginError("Retail margin must be between Min and Max margin");
+      setMarginError("Markup must be between minimum and maximum markup");
     } else {
       setMarginError(null);
     }
 
-    // Apply discount
-    let finalPrice = retailPrice;
-    if (margin_unit === "rs") {
-      finalPrice = retailPrice - discount;
-    } else if (margin_unit === "%") {
-      finalPrice = retailPrice - (retailPrice * discount) / 100;
-    }
+    // Apply discount (in Rs)
+    let finalPrice = retailPrice - discount;
 
     setTaxablePrice(finalPrice);
 
     // Sales price with GST + CESS
     const sales = finalPrice + (finalPrice * (gst + cess)) / 100;
     setSalesPrice(sales);
-  }, [cost_price, retail_margin, discount, gst, cess, margin_unit, min_margin, max_margin]);
+  }, [cost_price, retail_margin, discount, gst, cess, min_margin, max_margin]);
 
-  // Reset cost-related fields when margin unit changes
-  useEffect(() => {
-    reset((prev) => ({
-      ...prev,
-      cost_price: 0,
-      retail_margin: 0,
-      min_margin: 0,
-      max_margin: 0,
-      discount: 0,
-    }));
-  }, [margin_unit, reset]);
+  const handleFormSubmit = (data: ProductForm) => {
+    if (marginError) return; // Prevent submission if margin validation fails
+    onSubmit(data);
+    reset();
+    onClose();
+  };
 
-
- if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-      <div className="bg-white w-full max-w-lg rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold text-blue-700 mb-4">
-          Create Product
-        </h2>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Add New Product</DialogTitle>
+      <DialogContent dividers>
+        <form id="product-form" onSubmit={handleSubmit(handleFormSubmit)}>
           {/* Name */}
-          <div>
-            <Controller
-              name="name"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  placeholder="Product Name"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              )}
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm">{errors.name.message}</p>
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                margin="dense"
+                label="Product Name"
+                fullWidth
+                error={!!errors.name}
+                helperText={errors.name?.message}
+              />
             )}
-          </div>
+          />
 
-          <div>
-            <Controller
-              name="cost_price"
-              control={control}
-              render={({ field }) => (
-                <input
-                  type="number"
-                  {...field}
-                  placeholder="Cost Price"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              )}
-            />
-          </div>
-
-          <div>
-            <Controller
-              name="retail_margin"
-              control={control}
-              render={({ field }) => (
-                <input
-                  type="number"
-                  {...field}
-                  placeholder="Retail Margin"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              )}
-            />
-            {marginError && (
-              <p className="text-red-500 text-sm">{marginError}</p>
+          {/* Base Price */}
+          <Controller
+            name="cost_price"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                margin="dense"
+                label="Base Price (₹)"
+                type="number"
+                fullWidth
+                error={!!errors.cost_price}
+                helperText={errors.cost_price?.message}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
             )}
-          </div>
+          />
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Markup */}
+          <Controller
+            name="retail_margin"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                margin="dense"
+                label="Markup (₹)"
+                type="number"
+                fullWidth
+                error={!!errors.retail_margin || !!marginError}
+                helperText={errors.retail_margin?.message || marginError}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
+            )}
+          />
+
+          {/* Min & Max Markup */}
+          <Box sx={{ display: "flex", gap: 2 }}>
             <Controller
               name="min_margin"
               control={control}
               render={({ field }) => (
-                <input
-                  type="number"
+                <TextField
                   {...field}
-                  placeholder="Min Margin"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  margin="dense"
+                  label="Min Markup (₹)"
+                  type="number"
+                  fullWidth
+                  error={!!errors.min_margin}
+                  helperText={errors.min_margin?.message}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 />
               )}
             />
@@ -191,57 +185,63 @@ const ProductAddDialog = ({open, onClose, onSubmit}: DialogProps) => {
               name="max_margin"
               control={control}
               render={({ field }) => (
-                <input
-                  type="number"
+                <TextField
                   {...field}
-                  placeholder="Max Margin"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  margin="dense"
+                  label="Max Markup (₹)"
+                  type="number"
+                  fullWidth
+                  error={!!errors.max_margin}
+                  helperText={errors.max_margin?.message}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 />
               )}
             />
-          </div>
+          </Box>
 
-          <div>
-            <Controller
-              name="discount"
-              control={control}
-              render={({ field }) => (
-                <input
-                  type="number"
-                  {...field}
-                  placeholder="Discount"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              )}
-            />
-          </div>
+          {/* Discount */}
+          <Controller
+            name="discount"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                margin="dense"
+                label="Discount (₹)"
+                type="number"
+                fullWidth
+                error={!!errors.discount}
+                helperText={errors.discount?.message}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
+            )}
+          />
 
-          <div>
-            <Controller
-              name="margin_unit"
-              control={control}
-              render={({ field }) => (
-                <select
-                  {...field}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="rs">Rs</option>
-                  <option value="%">%</option>
-                </select>
-              )}
-            />
-          </div>
+          {/* Pre-Tax Amount - Read Only (MOVED BEFORE GST/CESS) */}
+          <TextField
+            margin="dense"
+            label="Pre-Tax Amount"
+            value={taxablePrice.toFixed(2)}
+            fullWidth
+            disabled
+            sx={{ backgroundColor: '#f5f5f5' }}
+          />
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* GST & Cess */}
+          <Box sx={{ display: "flex", gap: 2 }}>
             <Controller
               name="gst"
               control={control}
               render={({ field }) => (
-                <input
-                  type="number"
+                <TextField
                   {...field}
-                  placeholder="GST (%)"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  margin="dense"
+                  label="GST (%)"
+                  type="number"
+                  fullWidth
+                  error={!!errors.gst}
+                  helperText={errors.gst?.message}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 />
               )}
             />
@@ -249,43 +249,45 @@ const ProductAddDialog = ({open, onClose, onSubmit}: DialogProps) => {
               name="cess"
               control={control}
               render={({ field }) => (
-                <input
-                  type="number"
+                <TextField
                   {...field}
-                  placeholder="Cess (%)"
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  margin="dense"
+                  label="Cess (%)"
+                  type="number"
+                  fullWidth
+                  error={!!errors.cess}
+                  helperText={errors.cess?.message}
+                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                 />
               )}
             />
-          </div>
+          </Box>
 
-          <div>
-            <input
-              value={taxablePrice.toFixed(2)}
-              readOnly
-              className="w-full px-3 py-2 border bg-gray-100 rounded-md"
-              placeholder="Taxable Price"
-            />
-          </div>
-          <div>
-            <input
-              value={salesPrice.toFixed(2)}
-              readOnly
-              className="w-full px-3 py-2 border bg-gray-100 rounded-md"
-              placeholder="Sales Price"
-            />
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition"
-          >
-            Save Product
-          </button>
+          {/* Final Selling Price - Read Only */}
+          <TextField
+            margin="dense"
+            label="Final Selling Price"
+            value={salesPrice.toFixed(2)}
+            fullWidth
+            disabled
+            sx={{ backgroundColor: '#f5f5f5' }}
+          />
         </form>
-      </div>
-    </div>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="inherit">
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          form="product-form"
+          variant="contained"
+          disabled={!!marginError}
+        >
+          Add Product
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
