@@ -19,16 +19,16 @@ export default function App() {
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
       {!hideSidebar && <Sidebar />}
-      
-      <div className={`flex-1 ${!hideSidebar ? 'overflow-y-auto' : ''}`}>
-        <div className={`${!hideSidebar ? 'p-6 h-full' : ''}`}>
+
+      <div className={`flex-1 ${!hideSidebar ? "overflow-y-auto" : ""}`}>
+        <div className={`${!hideSidebar ? "p-6 h-full" : ""}`}>
           <Routes>
             <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
               <Route path="/user" element={<UserPage />} />
               <Route path="/client" element={<ClientPage />} />
               <Route path="/product" element={<ProductPage />} />
-              <Route path="/add-product" element={<AddProduct />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/sales/add-product" element={<AddProduct />} />
+              <Route path="sales/checkout" element={<CheckoutPage />} />
               <Route path="/" element={<Navigate to="/user" replace />} />
             </Route>
 
