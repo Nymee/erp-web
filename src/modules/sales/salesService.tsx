@@ -49,4 +49,28 @@ const createSales = (payload: any) => {
   return products;
 };
 
-export default { getSalesProducts, createSales };
+const getSales = (query: BasicQuery) => {
+  const url = `${apiUrl}/api/sales?page=${query.page + 1}&limit=${
+    query.limit
+  }&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
+  const sales = fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch sales");
+      }
+      return res.json();
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return sales;
+};
+
+export default { getSalesProducts, createSales, getSales };
