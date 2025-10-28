@@ -29,6 +29,8 @@ export default function App() {
               <Route path="/product" element={<ProductPage />} />
               <Route path="/sales/add-product" element={<AddProduct />} />
               <Route path="sales/checkout" element={<CheckoutPage />} />
+              <Route path="sales/all" element={<SalesListingPage />} />
+
               <Route path="/" element={<Navigate to="/user" replace />} />
             </Route>
 
