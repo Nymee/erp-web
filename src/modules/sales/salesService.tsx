@@ -49,10 +49,15 @@ const createSales = (payload: any) => {
   return products;
 };
 
-const getSales = (query: BasicQuery) => {
+const getSales = (query: BasicQuery, type?:string) => {
   const url = `${apiUrl}/api/sales?page=${query.page + 1}&limit=${
     query.limit
   }&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
+
+  if(type){
+    url.concat(`&type=${type}`);
+  }
+
   const sales = fetch(url, {
     method: "GET",
     headers: {
