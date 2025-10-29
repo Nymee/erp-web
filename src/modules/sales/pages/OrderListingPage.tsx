@@ -14,7 +14,7 @@ interface SalesList {
   type: string;
 }
 
-const SalesListingPage = () => {
+const OrderListingPage = () => {
   const headCells: HeadCell<SalesList>[] = [
     {
       id: "order_no",
@@ -44,6 +44,7 @@ const SalesListingPage = () => {
   const [dense, setDense] = useState(false);
   const [sales, setSales] = useState<SalesList[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const type = "order";
 
   // Pagination & Search Handlers
   const handlePageChange = (newPage: number) => {
@@ -57,7 +58,7 @@ const SalesListingPage = () => {
   // Fetch Sales Orders
   async function fetchSales() {
     try {
-      const res = await salesService.getSales(query);
+      const res = await salesService.getSales(query, type);
       setSales(res.data);
       setTotalCount(res.total);
     } catch (err) {
@@ -116,4 +117,4 @@ const SalesListingPage = () => {
   );
 };
 
-export default SalesListingPage;
+export default OrderListingPage;

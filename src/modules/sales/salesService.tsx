@@ -49,10 +49,39 @@ const createSales = (payload: any) => {
   return products;
 };
 
-const getSales = (query: BasicQuery) => {
-  const url = `${apiUrl}/api/sales?page=${query.page + 1}&limit=${
+const updateSales = (payload: any, sales_id: string) => {
+  const url = `${apiUrl}/api/sales/${sales_id}`;
+  const products = fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify(payload),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      return res.json();
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return products;
+};
+
+const getSales = (query: BasicQuery, type?: string) => {
+  let url = `${apiUrl}/api/sales?page=${query.page + 1}&limit=${
     query.limit
-  }&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
+  }&order=${query.order}&orderBy=${query.orderBy}${
+    query.search ? `&search=${encodeURIComponent(query.search)}` : ""
+  }`;
+  if (type) {
+    url = url + `&type=${type}`;
+  }
+
   const sales = fetch(url, {
     method: "GET",
     headers: {
@@ -73,4 +102,4 @@ const getSales = (query: BasicQuery) => {
   return sales;
 };
 
-export default { getSalesProducts, createSales, getSales };
+export default { getSalesProducts, createSales, getSales, updateSales };

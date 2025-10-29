@@ -10,6 +10,8 @@ import CompanyPage from "./modules/company/pages/CompanyPage";
 import SalesListingPage from "./modules/sales/pages/SalesListingPage";
 import CheckoutPage from "./modules/sales/pages/CheckoutPage";
 import AddProduct from "./modules/sales/pages/AddProduct";
+import DraftListingPage from "./modules/sales/pages/DraftListingPage";
+import OrderListingPage from "./modules/sales/pages/OrderListingPage";
 
 export default function App() {
   const location = useLocation();
@@ -30,6 +32,10 @@ export default function App() {
               <Route path="/sales/add-product" element={<AddProduct />} />
               <Route path="sales/checkout" element={<CheckoutPage />} />
               <Route path="sales/all" element={<SalesListingPage />} />
+              <Route path="sales/drafts" element={<DraftListingPage />} />
+              <Route path="sales/drafts/:sales_id" element={<CheckoutPage />} />
+
+              <Route path="sales/orders" element={<OrderListingPage />} />
 
               <Route path="/" element={<Navigate to="/user" replace />} />
             </Route>
