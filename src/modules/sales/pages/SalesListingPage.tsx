@@ -29,7 +29,7 @@ const SalesListingPage = () => {
       label: "Customer",
     },
     { id: "grand_total", numeric: true, disablePadding: false, label: "Total" },
-    { id: "type", numeric: true, disablePadding: false, label: "Total" },
+    { id: "type", numeric: true, disablePadding: false, label: "Type" },
   ];
 
   const [query, setQuery] = useState<BasicQuery>({
