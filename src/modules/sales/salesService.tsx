@@ -102,4 +102,33 @@ const getSales = (query: BasicQuery, type?: string) => {
   return sales;
 };
 
-export default { getSalesProducts, createSales, getSales, updateSales };
+const getSalesById = (sales_id?: string) => {
+  let url = `${apiUrl}/api/sales/${sales_id}`;
+
+  const sales = fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Failed to fetch sales");
+      }
+      return res.json();
+    })
+    .catch((err) => {
+      throw err;
+    });
+
+  return sales;
+};
+
+export default {
+  getSalesProducts,
+  createSales,
+  getSales,
+  updateSales,
+  getSalesById,
+};
