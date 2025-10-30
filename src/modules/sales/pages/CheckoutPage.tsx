@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import salesService from "../salesService";
-import { useParams } from "react-router-dom";
 
 interface SelectedProduct {
   _id: string;
@@ -25,10 +24,35 @@ const CheckoutPage = () => {
   };
 
   const [products, setProducts] = useState<SelectedProduct[]>(initialProducts);
-  console.log(products, "prodoooooo");
   const [so_discount, setSoDiscount] = useState<number>(0);
-
+  const [expired, setExpired] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log("sales_id", sales_id);
+    if (!sales_id) return;
+    console.log("hereeeeeeeeeee");
+
+    const checkExpiry = async () => {
+      try {
+        setLoading(true);
+        const res = await salesService.getSalesById(sales_id);
+        if (res?.data) {
+          const expiresAt = new Date(res.data.expiresAt).getTime();
+          const now = Date.now();
+          if (now > expiresAt) setExpired(true);
+          console.log("SetExpireddd", setExpired);
+        }
+      } catch (err) {
+        console.error("Error checking expiry:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkExpiry();
+  }, [sales_id]);
 
   const calculateSalesPrice = (p: SelectedProduct) => {
     const cost = Number(p.cost_price);
@@ -38,21 +62,13 @@ const CheckoutPage = () => {
     const cess = Number(p.cess ?? 0);
     const qty = Number(p.quantity ?? 1);
 
-    // Step 1: Apply margin
     const priceAfterMargin = cost + margin;
-
-    // Step 2: Apply discount
     const priceAfterDiscount = priceAfterMargin - discount;
-
-    // Step 3: Apply GST and CESS (both are percentages)
     const gstAmount = (priceAfterDiscount * gst) / 100;
     const cessAmount = (priceAfterDiscount * cess) / 100;
     const priceAfterTax = priceAfterDiscount + gstAmount + cessAmount;
 
-    // Step 4: Multiply by quantity
-    const total = Number((priceAfterTax * qty).toFixed(2));
-
-    return total;
+    return Number((priceAfterTax * qty).toFixed(2));
   };
 
   const handleProductChange = (
@@ -88,8 +104,6 @@ const CheckoutPage = () => {
         retail_margin_type: "rup",
         discount: p.discount,
         discount_type: p.discount != null ? "rup" : undefined,
-        gst: p.gst || 0,
-        cess: p.cess || 0,
       })),
     };
     if (sales_id) {
@@ -110,15 +124,34 @@ const CheckoutPage = () => {
     if (res) navigate("/sales/all");
   };
 
+  if (loading && sales_id)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Checking draft status...
+      </div>
+    );
+
   return (
-    <div className="m in-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 flex items-center justify-between">
+        <div
+          className={`rounded-2xl shadow-md p-6 border flex items-center justify-between ${
+            expired ? "bg-red-50 border-red-300" : "bg-white border-gray-100"
+          }`}
+        >
           <div>
-            <h2 className="text-3xl font-bold text-gray-800">Checkout</h2>
-            <p className="text-gray-500">
-              Finalize and confirm your sales order
+            <h2
+              className={`text-3xl font-bold ${
+                expired ? "text-red-700" : "text-gray-800"
+              }`}
+            >
+              {expired ? "Draft Expired" : "Checkout"}
+            </h2>
+            <p className={`${expired ? "text-red-600" : "text-gray-500"}`}>
+              {expired
+                ? "This draft has expired and cannot be modified."
+                : "Finalize and confirm your sales order"}
             </p>
           </div>
         </div>
@@ -130,13 +163,13 @@ const CheckoutPage = () => {
               <thead className="bg-gray-100 text-gray-800 text-left uppercase tracking-wider">
                 <tr>
                   <th className="px-5 py-3">Product</th>
-                  <th className="px-5 py-3">Cost Price</th>
-                  <th className="px-5 py-3">Retail Margin (₹)</th>
+                  <th className="px-5 py-3">Base Price</th>
+                  <th className="px-5 py-3">Markup (₹)</th>
                   <th className="px-5 py-3">Discount (₹)</th>
                   <th className="px-5 py-3">GST (%)</th>
                   <th className="px-5 py-3">Cess (%)</th>
                   <th className="px-5 py-3">Quantity</th>
-                  <th className="px-5 py-3 text-right">Sales Price</th>
+                  <th className="px-5 py-3 text-right">Final Price</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,10 +183,11 @@ const CheckoutPage = () => {
                     <td className="px-5 py-3 font-semibold">{p.name}</td>
                     <td className="px-5 py-3">₹{p.cost_price.toFixed(2)}</td>
 
-                    {/* Retail Margin */}
+                    {/* Markup */}
                     <td className="px-5 py-3">
                       <input
                         type="number"
+                        disabled={expired}
                         value={p.retail_margin}
                         onChange={(e) =>
                           handleProductChange(
@@ -162,7 +196,9 @@ const CheckoutPage = () => {
                             e.target.value
                           )
                         }
-                        className="w-24 border border-gray-300 px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        className={`w-24 border border-gray-300 px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                          expired ? "bg-gray-100 text-gray-400" : ""
+                        }`}
                       />
                     </td>
 
@@ -170,12 +206,15 @@ const CheckoutPage = () => {
                     <td className="px-5 py-3">
                       <input
                         type="number"
+                        disabled={expired}
                         value={p.discount ?? ""}
                         onChange={(e) =>
                           handleProductChange(i, "discount", e.target.value)
                         }
                         placeholder="0"
-                        className="w-24 border border-gray-300 px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        className={`w-24 border border-gray-300 px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                          expired ? "bg-gray-100 text-gray-400" : ""
+                        }`}
                       />
                     </td>
 
@@ -194,11 +233,14 @@ const CheckoutPage = () => {
                       <input
                         type="number"
                         min={1}
+                        disabled={expired}
                         value={p.quantity ?? 1}
                         onChange={(e) =>
                           handleProductChange(i, "quantity", e.target.value)
                         }
-                        className="w-20 border border-gray-300 px-3 py-1.5 rounded-lg text-center focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        className={`w-20 border border-gray-300 px-3 py-1.5 rounded-lg text-center focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                          expired ? "bg-gray-100 text-gray-400" : ""
+                        }`}
                       />
                     </td>
 
@@ -215,7 +257,6 @@ const CheckoutPage = () => {
 
         {/* Summary Section */}
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Final Discount */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Final Discount
@@ -226,14 +267,16 @@ const CheckoutPage = () => {
               </label>
               <input
                 type="number"
+                disabled={expired}
                 value={so_discount}
                 onChange={(e) => setSoDiscount(Number(e.target.value))}
-                className="w-28 border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                className={`w-28 border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                  expired ? "bg-gray-100 text-gray-400" : ""
+                }`}
               />
             </div>
           </div>
 
-          {/* Order Summary */}
           <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Order Summary
@@ -258,20 +301,23 @@ const CheckoutPage = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <button
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all"
-                onClick={() => handleSave(true)}
-              >
-                Save as Order
-              </button>
-              <button
-                className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all"
-                onClick={() => handleSave(false)}
-              >
-                Save as Draft
-              </button>
-            </div>
+            {/* Buttons hidden if expired */}
+            {!expired && (
+              <div className="flex gap-3 mt-6">
+                <button
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all"
+                  onClick={() => handleSave(true)}
+                >
+                  Save as Order
+                </button>
+                <button
+                  className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all"
+                  onClick={() => handleSave(false)}
+                >
+                  Save as Draft
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
