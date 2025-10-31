@@ -10,6 +10,7 @@ import {
   PlusCircle,
   ChevronDown,
   ChevronRight,
+  Truck,
 } from "lucide-react";
 import { Button } from "@mui/material";
 import { NavLink } from "react-router-dom";
@@ -73,6 +74,14 @@ export default function Sidebar() {
                 className="group-hover:scale-110 transition-transform"
               />
               <span className="font-medium">Customers</span>
+            </NavLink>
+
+            <NavLink to="/supplier" className={navLinkClasses}>
+              <Truck
+                size={20}
+                className="group-hover:scale-110 transition-transform"
+              />
+              <span className="font-medium">Suppliers</span>
             </NavLink>
 
             <NavLink to="/product" className={navLinkClasses}>
