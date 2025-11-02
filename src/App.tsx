@@ -7,6 +7,7 @@ import ProtectedRoute from "./route-layout/components/ProtectedRoute";
 import ClientPage from "./modules/client/pages/ClientPage";
 import SupplierPage from "./modules/supplier/pages/SupplierPage";
 import ProductPage from "./modules/products/pages/ProductPage";
+import InventoryPage from "./modules/inventory/pages/InventoryPage";
 import CompanyPage from "./modules/company/pages/CompanyPage";
 import SalesListingPage from "./modules/sales/pages/SalesListingPage";
 import CheckoutPage from "./modules/sales/pages/CheckoutPage";
@@ -31,6 +32,7 @@ export default function App() {
               <Route path="/client" element={<ClientPage />} />
               <Route path="/supplier" element={<SupplierPage />} />
               <Route path="/product" element={<ProductPage />} />
+              <Route path="/inventory" element={<InventoryPage />} />
               <Route path="/sales/add-product" element={<AddProduct />} />
               <Route path="sales/checkout" element={<CheckoutPage />} />
               <Route path="sales/all" element={<SalesListingPage />} />
