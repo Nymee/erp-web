@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   Truck,
+  Warehouse,
 } from "lucide-react";
 import { Button } from "@mui/material";
 import { NavLink } from "react-router-dom";
@@ -90,6 +91,14 @@ export default function Sidebar() {
                 className="group-hover:scale-110 transition-transform"
               />
               <span className="font-medium">Products</span>
+            </NavLink>
+
+            <NavLink to="/inventory" className={navLinkClasses}>
+              <Warehouse
+                size={20}
+                className="group-hover:scale-110 transition-transform"
+              />
+              <span className="font-medium">Inventory</span>
             </NavLink>
 
             {/* Collapsible Sales Section */}

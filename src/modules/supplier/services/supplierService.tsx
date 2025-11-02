@@ -26,10 +26,12 @@ export const getSuppliers = () => {
 };
 
 export const createSupplier = (data: any) => {
-  const url = `${apiUrl}/api/suppliers`;
+  const url = `${apiUrl}/api/supplier`;
   return fetch(url, {
     method: "POST",
     headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
