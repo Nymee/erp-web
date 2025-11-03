@@ -14,10 +14,39 @@ import CheckoutPage from "./modules/sales/pages/CheckoutPage";
 import AddProduct from "./modules/sales/pages/AddProduct";
 import DraftListingPage from "./modules/sales/pages/DraftListingPage";
 import OrderListingPage from "./modules/sales/pages/OrderListingPage";
+import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 export default function App() {
+  const { isAuthenticated, getAccessTokenSilently, isLoading } = useAuth0();
+  const navigate = useNavigate();
   const location = useLocation();
-  const hideSidebar =
+
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      if (isAuthenticated && !localStorage.getItem("token")) {
+        try {
+          const token = await getAccessTokenSilently();
+          const decodedToken: any = jwtDecode(token);
+          
+          localStorage.setItem("token", token);
+          localStorage.setItem("decodedToken", JSON.stringify(decodedToken));
+          
+          // Redirect based on role (your logic)
+          if (decodedToken.role === "ADMIN") {
+            navigate("/company");
+          } else {
+            navigate("/user");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+    };
+    handleAuthCallback();
+  }, [isAuthenticated, getAccessTokenSilently, navigate]);  const hideSidebar =
     location.pathname === "/login" || location.pathname === "/sign-up";
 
   return (
