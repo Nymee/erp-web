@@ -25,28 +25,50 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      if (isAuthenticated && !localStorage.getItem("token")) {
-        try {
-          const token = await getAccessTokenSilently();
-          const decodedToken: any = jwtDecode(token);
-          
-          localStorage.setItem("token", token);
-          localStorage.setItem("decodedToken", JSON.stringify(decodedToken));
-          
-          // Redirect based on role (your logic)
-          if (decodedToken.role === "ADMIN") {
-            navigate("/company");
-          } else {
-            navigate("/user");
+    const handleAuth = async () => {
+      console.log("isAuthenticated:", isAuthenticated);
+      console.log("isLoading:", isLoading);
+
+      if (isLoading) return;
+
+      if (isAuthenticated) {
+        const existingToken = localStorage.getItem("token");
+
+        if (!existingToken) {
+          try {
+            const token = await getAccessTokenSilently({
+              authorizationParams: {
+                audience: "https://api.salesphere.com",
+              },
+            });
+
+            const decodedToken: any = jwtDecode(token);
+
+            localStorage.setItem("token", token);
+            localStorage.setItem("decodedToken", JSON.stringify(decodedToken));
+
+            const role =
+              decodedToken["https://api.salesphere.com/role"] ||
+              decodedToken.role;
+            if (role === "ADMIN") {
+              navigate("/company");
+            } else {
+              navigate("/user");
+            }
+          } catch (error) {
+            console.error("Error:", error);
           }
-        } catch (error) {
-          console.error("Error:", error);
         }
+      } else if (!isLoading && location.pathname === "/") {
+        // Only redirect to login if not authenticated and not loading
+        navigate("/login");
       }
     };
-    handleAuthCallback();
-  }, [isAuthenticated, getAccessTokenSilently, navigate]);  const hideSidebar =
+
+    handleAuth();
+  }, [isAuthenticated, isLoading, getAccessTokenSilently, navigate, location]);
+
+  const hideSidebar =
     location.pathname === "/login" || location.pathname === "/sign-up";
 
   return (
@@ -56,6 +78,9 @@ export default function App() {
       <div className={`flex-1 ${!hideSidebar ? "overflow-y-auto" : ""}`}>
         <div className={`${!hideSidebar ? "p-6 h-full" : ""}`}>
           <Routes>
+            <Route path="/sign-up" element={<SignUpPage />} />
+            <Route path="/login" element={<LoginPage />} />
+
             <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
               <Route path="/user" element={<UserPage />} />
               <Route path="/client" element={<ClientPage />} />
@@ -69,17 +94,10 @@ export default function App() {
               <Route path="sales/drafts/:sales_id" element={<CheckoutPage />} />
 
               <Route path="sales/orders" element={<OrderListingPage />} />
-
-              <Route path="/" element={<Navigate to="/user" replace />} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route path="/company" element={<CompanyPage />} />
-            </Route>
-
-            <Route path="/">
-              <Route path="/sign-up" element={<SignUpPage />} />
-              <Route path="/login" element={<LoginPage />} />
             </Route>
           </Routes>
         </div>
