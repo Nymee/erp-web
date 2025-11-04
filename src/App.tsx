@@ -15,7 +15,7 @@ import AddProduct from "./modules/sales/pages/AddProduct";
 import DraftListingPage from "./modules/sales/pages/DraftListingPage";
 import OrderListingPage from "./modules/sales/pages/OrderListingPage";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
@@ -23,6 +23,8 @@ export default function App() {
   const { isAuthenticated, getAccessTokenSilently, isLoading } = useAuth0();
   const navigate = useNavigate();
   const location = useLocation();
+    const [authProcessing, setAuthProcessing] = useState(true); // Add this
+
 
   useEffect(() => {
     const handleAuth = async () => {
@@ -50,6 +52,7 @@ export default function App() {
             const role =
               decodedToken["https://api.salesphere.com/role"] ||
               decodedToken.role;
+            console.log(role, "roleeeeeeeeeee")
             if (role === "ADMIN") {
               navigate("/company");
             } else {
@@ -57,11 +60,18 @@ export default function App() {
             }
           } catch (error) {
             console.error("Error:", error);
+
           }
         }
+        setAuthProcessing(false); // Done processing
+
       } else if (!isLoading && location.pathname === "/") {
         // Only redirect to login if not authenticated and not loading
+        setAuthProcessing(false);
         navigate("/login");
+      } else if (!isLoading) {
+        // Not authenticated and not on home page
+        setAuthProcessing(false);
       }
     };
 
@@ -71,9 +81,12 @@ export default function App() {
   const hideSidebar =
     location.pathname === "/login" || location.pathname === "/sign-up";
 
+  // Don't render sidebar until auth is processed or we're on a public route
+  const shouldShowSidebar = !hideSidebar && !authProcessing;
+
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-      {!hideSidebar && <Sidebar />}
+      {shouldShowSidebar && <Sidebar />}
 
       <div className={`flex-1 ${!hideSidebar ? "overflow-y-auto" : ""}`}>
         <div className={`${!hideSidebar ? "p-6 h-full" : ""}`}>

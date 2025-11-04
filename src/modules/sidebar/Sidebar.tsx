@@ -18,8 +18,7 @@ import { NavLink } from "react-router-dom";
 import { useState } from "react";
 
 export default function Sidebar() {
-  const role = JSON.parse(localStorage.getItem("decodedToken") || "{}")?.role;
-  const [salesOpen, setSalesOpen] = useState(true);
+const role = JSON.parse(localStorage.getItem("decodedToken") || "{}")?.["https://api.salesphere.com/role"];  const [salesOpen, setSalesOpen] = useState(true);
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer group

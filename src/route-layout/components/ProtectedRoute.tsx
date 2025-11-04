@@ -6,8 +6,12 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const token = localStorage.getItem("decodedToken");
-  const role = token ? JSON.parse(token).role : null;
-  const exp = token ? JSON.parse(token).exp : null;
+  const decodedToken = token ? JSON.parse(token) : null;
+  
+  // Fix: Use the namespaced key
+  const role = decodedToken ? decodedToken["https://api.salesphere.com/role"] : null;
+  const exp = decodedToken ? decodedToken.exp : null;
+  
   let expired = false;
 
   if (exp) {
@@ -15,18 +19,19 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     expired = exp < currentTime;
   }
 
-  console.log(token, "tokennnnn");
+  console.log("Role:", role);
+  console.log("Allowed roles:", allowedRoles);
 
   if (!token || expired === true) {
     localStorage.removeItem("decodedToken");
-    return <Navigate to="/login" replace />; //rest of the code wont run once this is returned
+    localStorage.removeItem("token");
+    return <Navigate to="/login" replace />;
   }
 
   if (role && allowedRoles.includes(role)) {
     return <Outlet />;
   } else {
     return <Navigate to="/unauthorized" replace />;
-    // Or return a custom unauthorized component instead
   }
 };
 
