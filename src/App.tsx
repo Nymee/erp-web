@@ -18,59 +18,63 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import { setTokenGetter } from "./lib/axios";
 
 export default function App() {
   const { isAuthenticated, getAccessTokenSilently, isLoading } = useAuth0();
   const navigate = useNavigate();
   const location = useLocation();
-    const [authProcessing, setAuthProcessing] = useState(true); // Add this
+  const [authProcessing, setAuthProcessing] = useState(true); // Add this
 
+  // Initialize axios interceptor with Auth0 token getter
+  useEffect(() => {
+    setTokenGetter(async () => {
+      return await getAccessTokenSilently({
+        authorizationParams: {
+          audience: "https://api.salesphere.com",
+        },
+      });
+    });
+  }, [getAccessTokenSilently]);
 
   useEffect(() => {
     const handleAuth = async () => {
-      console.log("isAuthenticated:", isAuthenticated);
-      console.log("isLoading:", isLoading);
-
-      if (isLoading) return;
+      if (isLoading) return; // still checking session → do nothing
 
       if (isAuthenticated) {
-        const existingToken = localStorage.getItem("token");
+        try {
+          // ✅ Always get a fresh token (SDK caches/renews automatically)
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: "https://api.salesphere.com",
+            },
+          });
 
-        if (!existingToken) {
-          try {
-            const token = await getAccessTokenSilently({
-              authorizationParams: {
-                audience: "https://api.salesphere.com",
-              },
-            });
+          // ✅ Decode it in memory only
+          const decoded: any = jwtDecode(token);
+          console.log(decoded, "leeeeeeeeeeeeeee");
 
-            const decodedToken: any = jwtDecode(token);
+          const role =
+            decoded["https://api.salesphere.com/role"] || decoded.role;
 
-            localStorage.setItem("token", token);
-            localStorage.setItem("decodedToken", JSON.stringify(decodedToken));
+          console.log("User role:", role);
 
-            const role =
-              decodedToken["https://api.salesphere.com/role"] ||
-              decodedToken.role;
-            console.log(role, "roleeeeeeeeeee")
-            if (role === "ADMIN") {
-              navigate("/company");
-            } else {
-              navigate("/user");
-            }
-          } catch (error) {
-            console.error("Error:", error);
-
+          // ✅ Navigate based on role
+          if (role === "ADMIN") {
+            navigate("/company");
+          } else {
+            navigate("/user");
           }
+        } catch (err) {
+          console.error("Token fetch error:", err);
         }
-        setAuthProcessing(false); // Done processing
 
-      } else if (!isLoading && location.pathname === "/") {
-        // Only redirect to login if not authenticated and not loading
         setAuthProcessing(false);
-        navigate("/login");
       } else if (!isLoading) {
-        // Not authenticated and not on home page
+        // ✅ Not authenticated: redirect to login (only from root)
+        if (location.pathname === "/") {
+          navigate("/login");
+        }
         setAuthProcessing(false);
       }
     };

@@ -1,34 +1,60 @@
 import { Navigate, Outlet } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   allowedRoles: string[];
 }
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const token = localStorage.getItem("decodedToken");
-  const decodedToken = token ? JSON.parse(token) : null;
-  
-  // Fix: Use the namespaced key
-  const role = decodedToken ? decodedToken["https://api.salesphere.com/role"] : null;
-  const exp = decodedToken ? decodedToken.exp : null;
-  
-  let expired = false;
+  const { isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [checkingRole, setCheckingRole] = useState(true);
 
-  if (exp) {
-    const currentTime = Date.now() / 1000;
-    expired = exp < currentTime;
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (isLoading) return;
+
+      if (isAuthenticated) {
+        try {
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: "https://api.salesphere.com",
+            },
+          });
+
+          const decodedToken: any = jwtDecode(token);
+          const role = decodedToken["https://api.salesphere.com/role"] || decodedToken.role;
+
+          console.log("Role:", role);
+          console.log("Allowed roles:", allowedRoles);
+
+          setUserRole(role);
+        } catch (error) {
+          console.error("Error fetching token:", error);
+          setUserRole(null);
+        }
+      }
+
+      setCheckingRole(false);
+    };
+
+    fetchRole();
+  }, [isAuthenticated, isLoading, getAccessTokenSilently, allowedRoles]);
+
+  // Still loading auth state or checking role
+  if (isLoading || checkingRole) {
+    return null; // or a loading spinner
   }
 
-  console.log("Role:", role);
-  console.log("Allowed roles:", allowedRoles);
-
-  if (!token || expired === true) {
-    localStorage.removeItem("decodedToken");
-    localStorage.removeItem("token");
+  // Not authenticated
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (role && allowedRoles.includes(role)) {
+  // Check if user has required role
+  if (userRole && allowedRoles.includes(userRole)) {
     return <Outlet />;
   } else {
     return <Navigate to="/unauthorized" replace />;
