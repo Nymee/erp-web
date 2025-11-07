@@ -1,9 +1,10 @@
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "./modules/sidebar/Sidebar";
 import LoginPage from "./modules/auth/pages/LoginPage";
 import SignUpPage from "./modules/auth/pages/SignUpPage";
 import UserPage from "./modules/user/pages/UserPage";
 import ProtectedRoute from "./route-layout/components/ProtectedRoute";
+import AuthRedirect from "./route-layout/components/AuthRedirect";
 import ClientPage from "./modules/client/pages/ClientPage";
 import SupplierPage from "./modules/supplier/pages/SupplierPage";
 import ProductPage from "./modules/products/pages/ProductPage";
@@ -15,88 +16,52 @@ import AddProduct from "./modules/sales/pages/AddProduct";
 import DraftListingPage from "./modules/sales/pages/DraftListingPage";
 import OrderListingPage from "./modules/sales/pages/OrderListingPage";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
+import { useEffect } from "react";
 import { setTokenGetter } from "./lib/axios";
+import UnauthorizedPage from "./modules/unauthorised/pages/Unauthorized";
 
 export default function App() {
-  const { isAuthenticated, getAccessTokenSilently, isLoading } = useAuth0();
-  const navigate = useNavigate();
+  const { getAccessTokenSilently, isLoading, isAuthenticated } = useAuth0();
   const location = useLocation();
-  const [authProcessing, setAuthProcessing] = useState(true); // Add this
 
-  // Initialize axios interceptor with Auth0 token getter
+  // Initialize axios interceptor with Auth0 token getter (runs once)
   useEffect(() => {
-    setTokenGetter(async () => {
-      return await getAccessTokenSilently({
-        authorizationParams: {
-          audience: "https://api.salesphere.com",
-        },
+    if (!isLoading && isAuthenticated) {
+      setTokenGetter(async () => {
+        return await getAccessTokenSilently({
+          authorizationParams: {
+            audience: "https://api.salesphere.com",
+          },
+        });
       });
-    });
-  }, [getAccessTokenSilently]);
+    }
+  }, [getAccessTokenSilently, isLoading, isAuthenticated]);
 
-  useEffect(() => {
-    const handleAuth = async () => {
-      if (isLoading) return; // still checking session → do nothing
-
-      if (isAuthenticated) {
-        try {
-          // ✅ Always get a fresh token (SDK caches/renews automatically)
-          const token = await getAccessTokenSilently({
-            authorizationParams: {
-              audience: "https://api.salesphere.com",
-            },
-          });
-
-          // ✅ Decode it in memory only
-          const decoded: any = jwtDecode(token);
-          console.log(decoded, "leeeeeeeeeeeeeee");
-
-          const role =
-            decoded["https://api.salesphere.com/role"] || decoded.role;
-
-          console.log("User role:", role);
-
-          // ✅ Navigate based on role
-          if (role === "ADMIN") {
-            navigate("/company");
-          } else {
-            navigate("/user");
-          }
-        } catch (err) {
-          console.error("Token fetch error:", err);
-        }
-
-        setAuthProcessing(false);
-      } else if (!isLoading) {
-        // ✅ Not authenticated: redirect to login (only from root)
-        if (location.pathname === "/") {
-          navigate("/login");
-        }
-        setAuthProcessing(false);
-      }
-    };
-
-    handleAuth();
-  }, [isAuthenticated, isLoading, getAccessTokenSilently, navigate, location]);
+  // Show loading spinner while Auth0 is initializing
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const hideSidebar =
-    location.pathname === "/login" || location.pathname === "/sign-up";
-
-  // Don't render sidebar until auth is processed or we're on a public route
-  const shouldShowSidebar = !hideSidebar && !authProcessing;
+    location.pathname === "/login" ||
+    location.pathname === "/sign-up" ||
+    location.pathname === "/unauthorized";
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
-      {shouldShowSidebar && <Sidebar />}
+      {!hideSidebar && isAuthenticated && <Sidebar />}
 
       <div className={`flex-1 ${!hideSidebar ? "overflow-y-auto" : ""}`}>
         <div className={`${!hideSidebar ? "p-6 h-full" : ""}`}>
           <Routes>
+            <Route path="/" element={<AuthRedirect />} />
             <Route path="/sign-up" element={<SignUpPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
             <Route element={<ProtectedRoute allowedRoles={["SAU", "SALES"]} />}>
               <Route path="/user" element={<UserPage />} />
@@ -109,7 +74,6 @@ export default function App() {
               <Route path="sales/all" element={<SalesListingPage />} />
               <Route path="sales/drafts" element={<DraftListingPage />} />
               <Route path="sales/drafts/:sales_id" element={<CheckoutPage />} />
-
               <Route path="sales/orders" element={<OrderListingPage />} />
             </Route>
 
