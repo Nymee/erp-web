@@ -24,7 +24,6 @@ export const getInventoryProducts = async (query: BasicQuery) => {
   });
   return response.data;
 };
-
 export const createInventory = async (data: any) => {
   try {
     const response = await apiClient.post(`/api/inventory`, data);
