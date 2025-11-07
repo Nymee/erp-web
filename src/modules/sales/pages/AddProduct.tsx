@@ -98,6 +98,7 @@ const AddProduct = () => {
       alert("Please select a client before proceeding to checkout.");
       return;
     }
+    console.log("prodoooo", selected);
 
     navigate("/sales/checkout", {
       state: {

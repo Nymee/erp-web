@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BasicQuery, HeadCell } from "../../../interfaces/interfaces";
 import EnhancedTable from "../../../shared/components/Table";
 import salesService from "../salesService";
+import { useNavigate } from "react-router-dom";
 
 interface SalesList {
   _id: string;
@@ -14,7 +15,9 @@ interface SalesList {
   type: string;
 }
 
-const SalesListingPage = () => {
+const DraftListingPage = () => {
+  const navigate = useNavigate();
+
   const headCells: HeadCell<SalesList>[] = [
     {
       id: "order_no",
@@ -44,6 +47,7 @@ const SalesListingPage = () => {
   const [dense, setDense] = useState(false);
   const [sales, setSales] = useState<SalesList[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const type = "estimation";
 
   // Pagination & Search Handlers
   const handlePageChange = (newPage: number) => {
@@ -57,13 +61,22 @@ const SalesListingPage = () => {
   // Fetch Sales Orders
   async function fetchSales() {
     try {
-      const res = await salesService.getSales(query);
+      const res = await salesService.getSales(query, type);
       setSales(res.data);
       setTotalCount(res.total);
     } catch (err) {
       console.error("Failed to fetch sales orders:", err);
     }
   }
+
+  const handleEditOrConvert = (row: SalesList) => {
+    navigate(`/sales/drafts/${row._id}`, {
+      state: {
+        products: row.products,
+        conversion: true,
+      },
+    });
+  };
 
   useEffect(() => {
     fetchSales();
@@ -110,10 +123,23 @@ const SalesListingPage = () => {
           id="_id"
           totalCount={totalCount}
           title="Sales Orders"
+          renderAction={(row) => (
+            <button
+              onClick={() => handleEditOrConvert(row)}
+              className={`px-3 py-1 text-sm font-medium rounded-lg transition 
+      ${
+        row.type === "estimation"
+          ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+          : "bg-green-600 hover:bg-green-700 text-white"
+      }`}
+            >
+              Edit/Convert
+            </button>
+          )}
         />
       </div>
     </div>
   );
 };
 
-export default SalesListingPage;
+export default DraftListingPage;

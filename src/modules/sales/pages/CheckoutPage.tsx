@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import salesService from "../salesService";
 
 interface SelectedProduct {
@@ -10,9 +10,13 @@ interface SelectedProduct {
   discount?: number;
   quantity?: number;
   sales_price: number;
+  gst: number;
+  cess: number;
+  productId: string;
 }
 
 const CheckoutPage = () => {
+  const { sales_id } = useParams();
   const location = useLocation();
   const { clientId, products: initialProducts } = location.state || {
     clientId: null,
@@ -21,26 +25,52 @@ const CheckoutPage = () => {
 
   const [products, setProducts] = useState<SelectedProduct[]>(initialProducts);
   const [so_discount, setSoDiscount] = useState<number>(0);
-
-  console.log(initialProducts, "gawrddd");
+  const [expired, setExpired] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  /** Calculate sales price for a single product (with quantity) */
+  useEffect(() => {
+    console.log("sales_id", sales_id);
+    if (!sales_id) return;
+    console.log("hereeeeeeeeeee");
+
+    const checkExpiry = async () => {
+      try {
+        setLoading(true);
+        const res = await salesService.getSalesById(sales_id);
+        if (res?.data) {
+          const expiresAt = new Date(res.data.expiresAt).getTime();
+          const now = Date.now();
+          if (now > expiresAt) setExpired(true);
+          console.log("SetExpireddd", setExpired);
+        }
+      } catch (err) {
+        console.error("Error checking expiry:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkExpiry();
+  }, [sales_id]);
+
   const calculateSalesPrice = (p: SelectedProduct) => {
     const cost = Number(p.cost_price);
     const margin = Number(p.retail_margin ?? 0);
     const discount = Number(p.discount ?? 0);
+    const gst = Number(p.gst ?? 0);
+    const cess = Number(p.cess ?? 0);
     const qty = Number(p.quantity ?? 1);
 
-    // All margin/discounts are rupee-based
     const priceAfterMargin = cost + margin;
     const priceAfterDiscount = priceAfterMargin - discount;
+    const gstAmount = (priceAfterDiscount * gst) / 100;
+    const cessAmount = (priceAfterDiscount * cess) / 100;
+    const priceAfterTax = priceAfterDiscount + gstAmount + cessAmount;
 
-    const total = Number((priceAfterDiscount * qty).toFixed(2));
-    return total;
+    return Number((priceAfterTax * qty).toFixed(2));
   };
 
-  /** Handle changes to product input fields */
   const handleProductChange = (
     index: number,
     field: keyof SelectedProduct,
@@ -52,28 +82,23 @@ const CheckoutPage = () => {
     setProducts(updated);
   };
 
-  /** Update computed sales prices */
   const productsWithSales = products.map((p) => ({
     ...p,
     sales_price: calculateSalesPrice(p),
     quantity: p.quantity || 1,
   }));
 
-  /** Subtotal */
   const subtotal = productsWithSales.reduce((sum, p) => sum + p.sales_price, 0);
-
-  /** Grand total after final discount */
   const grandTotal = subtotal - so_discount;
 
-  /** Handle save */
-  const handleSave = async (asOrder: boolean) => {
+  const handleSave = (asOrder: boolean) => {
     const payload = {
-      clientId: clientId,
+      clientId,
       type: asOrder ? "order" : "estimation",
       so_discount,
       so_discount_type: "rup",
       products: productsWithSales.map((p) => ({
-        productId: p._id,
+        productId: sales_id ? p.productId : p._id,
         quantity: p.quantity,
         retail_margin: p.retail_margin,
         retail_margin_type: "rup",
@@ -81,126 +106,147 @@ const CheckoutPage = () => {
         discount_type: p.discount != null ? "rup" : undefined,
       })),
     };
-    console.log("Payload:", payload);
-
-    const res = await salesService.createSales(payload);
-    if (res) {
-      navigate("/sales/all");
+    if (sales_id) {
+      handleUpdate(payload, sales_id);
+    } else {
+      handleCreate(payload);
     }
   };
 
+  const handleCreate = async (payload: any) => {
+    const res = await salesService.createSales(payload);
+    if (res) navigate("/sales/all");
+  };
+
+  const handleUpdate = async (payload: any, sales_id: string) => {
+    payload.price_update = false;
+    const res = await salesService.updateSales(payload, sales_id);
+    if (res) navigate("/sales/all");
+  };
+
+  if (loading && sales_id)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Checking draft status...
+      </div>
+    );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h2 className="text-3xl font-bold text-blue-800 mb-2">Checkout</h2>
-          <p className="text-blue-600">Review and finalize your order</p>
+        <div
+          className={`rounded-2xl shadow-md p-6 border flex items-center justify-between ${
+            expired ? "bg-red-50 border-red-300" : "bg-white border-gray-100"
+          }`}
+        >
+          <div>
+            <h2
+              className={`text-3xl font-bold ${
+                expired ? "text-red-700" : "text-gray-800"
+              }`}
+            >
+              {expired ? "Draft Expired" : "Checkout"}
+            </h2>
+            <p className={`${expired ? "text-red-600" : "text-gray-500"}`}>
+              {expired
+                ? "This draft has expired and cannot be modified."
+                : "Finalize and confirm your sales order"}
+            </p>
+          </div>
         </div>
 
         {/* Product Table */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+            <table className="w-full text-sm text-gray-700">
+              <thead className="bg-gray-100 text-gray-800 text-left uppercase tracking-wider">
                 <tr>
-                  <th className="px-4 py-4 text-left font-semibold">
-                    Product Name
-                  </th>
-                  <th className="px-4 py-4 text-left font-semibold">
-                    Cost Price
-                  </th>
-                  <th className="px-4 py-4 text-left font-semibold">
-                    Retail Margin (₹)
-                  </th>
-                  <th className="px-4 py-4 text-left font-semibold">
-                    Discount (₹)
-                  </th>
-                  <th className="px-4 py-4 text-left font-semibold">
-                    Quantity
-                  </th>
-                  <th className="px-4 py-4 text-left font-semibold">
-                    Sales Price
-                  </th>
+                  <th className="px-5 py-3">Product</th>
+                  <th className="px-5 py-3">Base Price</th>
+                  <th className="px-5 py-3">Markup (₹)</th>
+                  <th className="px-5 py-3">Discount (₹)</th>
+                  <th className="px-5 py-3">GST (%)</th>
+                  <th className="px-5 py-3">Cess (%)</th>
+                  <th className="px-5 py-3">Quantity</th>
+                  <th className="px-5 py-3 text-right">Final Price</th>
                 </tr>
               </thead>
               <tbody>
                 {productsWithSales.map((p, i) => (
                   <tr
                     key={i}
-                    className={`border-b hover:bg-blue-50 transition-colors ${
-                      i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    className={`border-t hover:bg-blue-50 transition-colors ${
+                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="px-4 py-4 font-medium text-gray-900">
-                      {p.name}
-                    </td>
-                    <td className="px-4 py-4 text-gray-700 font-medium">
-                      ₹{p.cost_price}
-                    </td>
+                    <td className="px-5 py-3 font-semibold">{p.name}</td>
+                    <td className="px-5 py-3">₹{p.cost_price.toFixed(2)}</td>
 
-                    {/* Retail Margin */}
-                    <td className="px-4 py-4">
-                      <div className="relative flex items-center">
-                        <span className="absolute left-3 text-gray-500">₹</span>
-                        <input
-                          type="number"
-                          value={p.retail_margin}
-                          onChange={(e) =>
-                            handleProductChange(
-                              i,
-                              "retail_margin",
-                              e.target.value
-                            )
-                          }
-                          className="w-24 pl-7 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
-                      </div>
+                    {/* Markup */}
+                    <td className="px-5 py-3">
+                      <input
+                        type="number"
+                        disabled={expired}
+                        value={p.retail_margin}
+                        onChange={(e) =>
+                          handleProductChange(
+                            i,
+                            "retail_margin",
+                            e.target.value
+                          )
+                        }
+                        className={`w-24 border border-gray-300 px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                          expired ? "bg-gray-100 text-gray-400" : ""
+                        }`}
+                      />
                     </td>
 
                     {/* Discount */}
-                    <td className="px-4 py-4">
-                      <div className="relative flex items-center">
-                        <span className="absolute left-3 text-gray-500">₹</span>
-                        <input
-                          type="number"
-                          value={p.discount ?? ""}
-                          onChange={(e) =>
-                            handleProductChange(i, "discount", e.target.value)
-                          }
-                          className="w-24 pl-7 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                          placeholder="0"
-                        />
-                      </div>
+                    <td className="px-5 py-3">
+                      <input
+                        type="number"
+                        disabled={expired}
+                        value={p.discount ?? ""}
+                        onChange={(e) =>
+                          handleProductChange(i, "discount", e.target.value)
+                        }
+                        placeholder="0"
+                        className={`w-24 border border-gray-300 px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                          expired ? "bg-gray-100 text-gray-400" : ""
+                        }`}
+                      />
+                    </td>
+
+                    {/* GST */}
+                    <td className="px-5 py-3 text-gray-600">
+                      {p.gst ? `${p.gst}%` : "—"}
+                    </td>
+
+                    {/* Cess */}
+                    <td className="px-5 py-3 text-gray-600">
+                      {p.cess ? `${p.cess}%` : "—"}
                     </td>
 
                     {/* Quantity */}
-                    <td className="px-4 py-4">
+                    <td className="px-5 py-3">
                       <input
                         type="number"
                         min={1}
+                        disabled={expired}
                         value={p.quantity ?? 1}
                         onChange={(e) =>
                           handleProductChange(i, "quantity", e.target.value)
                         }
-                        className="w-20 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center font-medium"
+                        className={`w-20 border border-gray-300 px-3 py-1.5 rounded-lg text-center focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                          expired ? "bg-gray-100 text-gray-400" : ""
+                        }`}
                       />
                     </td>
 
                     {/* Sales Price */}
-                    <td className="px-4 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-lg font-bold text-blue-600">
-                          ₹{p.sales_price.toFixed(2)}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          (₹
-                          {((p.sales_price || 0) / (p.quantity || 1)).toFixed(
-                            2
-                          )}{" "}
-                          × {p.quantity})
-                        </span>
-                      </div>
+                    <td className="px-5 py-3 text-right font-semibold text-blue-700">
+                      ₹{p.sales_price.toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -209,81 +255,69 @@ const CheckoutPage = () => {
           </div>
         </div>
 
-        {/* Final Discount & Summary */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Final Discount */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Final Discount
-              </h3>
-              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                <label className="font-medium text-blue-800">
-                  Additional Discount:
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 text-gray-500">₹</span>
-                  <input
-                    type="number"
-                    value={so_discount}
-                    onChange={(e) => setSoDiscount(Number(e.target.value))}
-                    className="w-24 pl-7 border border-blue-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="0"
-                  />
+        {/* Summary Section */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Final Discount
+            </h3>
+            <div className="flex items-center gap-3 bg-blue-50 p-4 rounded-lg">
+              <label className="text-gray-700 font-medium">
+                Additional Discount (₹):
+              </label>
+              <input
+                type="number"
+                disabled={expired}
+                value={so_discount}
+                onChange={(e) => setSoDiscount(Number(e.target.value))}
+                className={`w-28 border border-gray-300 px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent ${
+                  expired ? "bg-gray-100 text-gray-400" : ""
+                }`}
+              />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Order Summary
+            </h3>
+            <div className="space-y-3 text-gray-700">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+              </div>
+              {so_discount > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span>Final Discount</span>
+                  <span>-₹{so_discount.toFixed(2)}</span>
                 </div>
+              )}
+              <hr className="border-gray-200" />
+              <div className="flex justify-between items-center text-lg">
+                <span className="font-bold text-gray-800">Grand Total</span>
+                <span className="font-bold text-blue-700">
+                  ₹{grandTotal.toFixed(2)}
+                </span>
               </div>
             </div>
 
-            {/* Order Summary */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Order Summary
-              </h3>
-              <div className="space-y-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600 font-medium">Subtotal:</span>
-                  <span className="text-lg font-semibold text-gray-800">
-                    ₹{subtotal.toFixed(2)}
-                  </span>
-                </div>
-                {so_discount > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 font-medium">
-                      Final Discount:
-                    </span>
-                    <span className="text-red-600 font-semibold">
-                      -₹{so_discount.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                <hr className="border-blue-200" />
-                <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold text-blue-800">
-                    Grand Total:
-                  </span>
-                  <span className="text-2xl font-bold text-blue-600">
-                    ₹{grandTotal.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Buttons */}
+            {/* Buttons hidden if expired */}
+            {!expired && (
               <div className="flex gap-3 mt-6">
                 <button
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all"
                   onClick={() => handleSave(true)}
                 >
                   Save as Order
                 </button>
-
                 <button
                   className="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all"
                   onClick={() => handleSave(false)}
                 >
-                  Save as Estimation
+                  Save as Draft
                 </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,33 +1,73 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   allowedRoles: string[];
 }
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const token = localStorage.getItem("decodedToken");
-  const role = token ? JSON.parse(token).role : null;
-  const exp = token ? JSON.parse(token).exp : null;
-  let expired = false;
+  const { isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [checkingRole, setCheckingRole] = useState(true);
+  const location = useLocation();
 
-  if (exp) {
-    const currentTime = Date.now() / 1000;
-    expired = exp < currentTime;
+  useEffect(() => {
+    const fetchRole = async () => {
+      // Don't check role if Auth0 is still loading
+      if (isLoading) {
+        return;
+      }
+
+      // Only fetch role if authenticated
+      if (isAuthenticated) {
+        try {
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: "https://api.salesphere.com",
+            },
+          });
+
+          const decodedToken: any = jwtDecode(token);
+          const role =
+            decodedToken["https://api.salesphere.com/role"] ||
+            decodedToken.role;
+
+          setUserRole(role);
+        } catch (error) {
+          console.error("Error fetching token:", error);
+          setUserRole(null);
+        }
+      }
+
+      setCheckingRole(false);
+    };
+
+    fetchRole();
+  }, [isAuthenticated, isLoading, getAccessTokenSilently]);
+
+  // Show loading while Auth0 is loading or while checking role
+  if (isLoading || checkingRole) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
-  console.log(token, "tokennnnn");
-
-  if (!token || expired === true) {
-    localStorage.removeItem("decodedToken");
-    return <Navigate to="/login" replace />; //rest of the code wont run once this is returned
+  // Not authenticated - redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (role && allowedRoles.includes(role)) {
+  // Check if user has required role
+  if (userRole && allowedRoles.includes(userRole)) {
     return <Outlet />;
-  } else {
-    return <Navigate to="/unauthorized" replace />;
-    // Or return a custom unauthorized component instead
   }
+
+  // User doesn't have required role
+  return <Navigate to="/unauthorized" replace />;
 };
 
 export default ProtectedRoute;
