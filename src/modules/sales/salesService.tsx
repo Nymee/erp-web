@@ -1,128 +1,52 @@
 import type { BasicQuery } from "../../interfaces/interfaces";
+import { apiClient } from "../../lib/axios";
 
-const apiUrl = import.meta.env.VITE_API_URL;
-
-const getSalesProducts = (query: BasicQuery) => {
-  const url = `${apiUrl}/api/sales/product?page=${query.page + 1}&limit=${
-    query.limit
-  }&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
-  const products = fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+const getSalesProducts = async (query: BasicQuery) => {
+  const response = await apiClient.get(`/api/sales/product`, {
+    params: {
+      page: query.page + 1,
+      limit: query.limit,
+      order: query.order,
+      orderBy: query.orderBy,
+      search: query.search,
     },
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      return res.json();
-    })
-    .catch((err) => {
-      throw err;
-    });
-
-  return products;
+  });
+  return response.data;
 };
 
-const createSales = (payload: any) => {
-  const url = `${apiUrl}/api/sales`;
-  const products = fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: JSON.stringify(payload),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      return res.json();
-    })
-    .catch((err) => {
-      throw err;
-    });
-
-  return products;
+const createSales = async (payload: any) => {
+  const response = await apiClient.post(`/api/sales`, payload);
+  return response.data;
 };
 
-const updateSales = (payload: any, sales_id: string) => {
-  const url = `${apiUrl}/api/sales/${sales_id}`;
-  const products = fetch(url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: JSON.stringify(payload),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      return res.json();
-    })
-    .catch((err) => {
-      throw err;
-    });
-
-  return products;
+const updateSales = async (payload: any, sales_id: string) => {
+  const response = await apiClient.put(`/api/sales/${sales_id}`, payload);
+  return response.data;
 };
 
-const getSales = (query: BasicQuery, type?: string) => {
-  let url = `${apiUrl}/api/sales?page=${query.page + 1}&limit=${
-    query.limit
-  }&order=${query.order}&orderBy=${query.orderBy}${
-    query.search ? `&search=${encodeURIComponent(query.search)}` : ""
-  }`;
-  if (type) {
-    url = url + `&type=${type}`;
+const getSales = async (query: BasicQuery, type?: string) => {
+  const params: any = {
+    page: query.page + 1,
+    limit: query.limit,
+    order: query.order,
+    orderBy: query.orderBy,
+  };
+
+  if (query.search) {
+    params.search = query.search;
   }
 
-  const sales = fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch sales");
-      }
-      return res.json();
-    })
-    .catch((err) => {
-      throw err;
-    });
+  if (type) {
+    params.type = type;
+  }
 
-  return sales;
+  const response = await apiClient.get(`/api/sales`, { params });
+  return response.data;
 };
 
-const getSalesById = (sales_id?: string) => {
-  let url = `${apiUrl}/api/sales/${sales_id}`;
-
-  const sales = fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch sales");
-      }
-      return res.json();
-    })
-    .catch((err) => {
-      throw err;
-    });
-
-  return sales;
+const getSalesById = async (sales_id?: string) => {
+  const response = await apiClient.get(`/api/sales/${sales_id}`);
+  return response.data;
 };
 
 export default {

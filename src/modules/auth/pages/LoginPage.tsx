@@ -1,36 +1,15 @@
-import { useState } from "react";
-import LoginForm from "../components/LoginForm";
-import { jwtDecode } from "jwt-decode";
-import type { Login } from "../../../interfaces/interfaces";
-import authService from "../authService";
-const LoginPage = () => {
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+import { useAuth0 } from "@auth0/auth0-react";
 
-  async function handleSubmit({ email, password }: Login) {
-    setLoading(true);
-    setError("");
-    try {
-      const data = await authService.loginUser({
-        email: email,
-        password: password,
-      });
-      const decodedToken = jwtDecode(data.token);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("decodedToken", JSON.stringify(decodedToken));
-      window.location.href = "/user";
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+const LoginButton = () => {
+  const { loginWithRedirect } = useAuth0();
   return (
-    <div>
-      {error && <p>{error}</p>}
-      <LoginForm onSubmit={handleSubmit} loading={loading} />
-    </div>
+    <button 
+      onClick={() => loginWithRedirect()} 
+      className="button login"
+    >
+      Log In
+    </button>
   );
 };
 
-export default LoginPage;
+export default LoginButton;

@@ -1,50 +1,22 @@
 import type { BasicQuery } from "../../interfaces/interfaces";
+import { apiClient } from "../../lib/axios";
 
-const apiUrl = import.meta.env.VITE_API_URL;
-
-const getUsers = (query: BasicQuery) => {
-  const url = `${apiUrl}/api/user?page=${query.page + 1}&limit=${
-    query.limit
-  }&order=${query.order}&orderBy=${query.orderBy}&search=${query.search}`;
-  const users = fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+const getUsers = async (query: BasicQuery) => {
+  const response = await apiClient.get(`/api/user`, {
+    params: {
+      page: query.page + 1,
+      limit: query.limit,
+      order: query.order,
+      orderBy: query.orderBy,
+      search: query.search,
     },
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to fetch users");
-      }
-      return res.json();
-    })
-    .catch((err) => {
-      throw err;
-    });
-
-  return users;
+  });
+  return response.data;
 };
 
-const createUsers = (data: any) => {
-  const url = `${apiUrl}/api/user`;
-  const users = fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-    body: JSON.stringify(data),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error("Failed to create user");
-      }
-      return res.json();
-    })
-    .catch((err) => {
-      throw err;
-    });
+const createUsers = async (data: any) => {
+  const response = await apiClient.post(`/api/user`, data);
+  return response.data;
 };
 
 export default { getUsers, createUsers };

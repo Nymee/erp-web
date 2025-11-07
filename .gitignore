@@ -26,3 +26,4 @@ dist-ssr
 #Build files
 /build
 /dist
+.env

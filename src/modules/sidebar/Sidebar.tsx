@@ -15,11 +15,34 @@ import {
 } from "lucide-react";
 import { Button } from "@mui/material";
 import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
+import { jwtDecode } from "jwt-decode";
 
 export default function Sidebar() {
-  const role = JSON.parse(localStorage.getItem("decodedToken") || "{}")?.role;
+  const { logout, getAccessTokenSilently } = useAuth0();
+  const [role, setRole] = useState<string | null>(null);
   const [salesOpen, setSalesOpen] = useState(true);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        const token = await getAccessTokenSilently({
+          authorizationParams: {
+            audience: "https://api.salesphere.com",
+          },
+        });
+
+        const decodedToken: any = jwtDecode(token);
+        const userRole = decodedToken["https://api.salesphere.com/role"] || decodedToken.role;
+        setRole(userRole);
+      } catch (error) {
+        console.error("Error fetching role:", error);
+      }
+    };
+
+    fetchRole();
+  }, [getAccessTokenSilently]);
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer group
@@ -167,6 +190,13 @@ export default function Sidebar() {
               backgroundColor: "rgba(239, 68, 68, 0.05)",
             },
           }}
+          onClick={() =>
+            logout({
+              logoutParams: {
+                returnTo: window.location.origin,
+              },
+            })
+          }
         >
           Logout
         </Button>
