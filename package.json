@@ -10,14 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.8.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.1",
     "@mui/icons-material": "^7.3.1",
     "@mui/material": "^7.3.1",
     "@tailwindcss/vite": "^4.1.12",
+    "axios": "^1.13.2",
+    "express-oauth2-jwt-bearer": "^1.7.1",
     "jwt-decode": "^4.0.0",
-    "lucide-react": "^0.539.0",
+    "lucide-react": "^0.553.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-form-hook": "^0.0.1",

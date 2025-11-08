@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 
 // Create axios instance with base configuration
 export const apiClient = axios.create({
@@ -17,7 +17,7 @@ export const setTokenGetter = (tokenGetter: () => Promise<string>) => {
 
 // Request interceptor to add Auth0 token to all requests
 apiClient.interceptors.request.use(
-  async (config) => {
+  async (config: InternalAxiosRequestConfig) => {
     if (getAccessToken) {
       try {
         const token = await getAccessToken();
@@ -30,15 +30,15 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Token expired or invalid - Auth0 will handle re-authentication
       console.error("Unauthorized - token may be expired");
