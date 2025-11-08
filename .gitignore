@@ -1,21 +1,36 @@
-# Logs
-logs
-*.log
+# ───────────────────────────────
+# Node / Dependencies
+# ───────────────────────────────
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+package-lock.json
+.pnpm-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ───────────────────────────────
+# Build output
+# ───────────────────────────────
+dist/
+dist-ssr/
+build/
 *.local
 
-# Editor directories and files
+# ───────────────────────────────
+# Environment variables
+# ───────────────────────────────
+.env
+.env.*
+!.env.example   # keep example file for reference
+
+# ───────────────────────────────
+# Editor / IDE files
+# ───────────────────────────────
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
@@ -23,7 +38,14 @@ dist-ssr
 *.sln
 *.sw?
 
-#Build files
-/build
-/dist
-.env
+# ───────────────────────────────
+# Logs
+# ───────────────────────────────
+logs/
+*.log
+*.log.*
+
+# ───────────────────────────────
+# OS / Misc
+# ───────────────────────────────
+Thumbs.db
